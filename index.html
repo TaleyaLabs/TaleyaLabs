@@ -70,6 +70,24 @@
       z-index: 1;
       transition: left 0.3s ease-out, top 0.3s ease-out;
     }
+
+    /* ── Screen shake ── */
+    .shaking {
+      animation: screenShake 0.6s ease-out;
+    }
+    @keyframes screenShake {
+      0%  { transform: translate(0, 0); }
+      10% { transform: translate(-8px, 6px); }
+      20% { transform: translate(7px, -8px); }
+      30% { transform: translate(-6px, 4px); }
+      40% { transform: translate(5px, -5px); }
+      50% { transform: translate(-4px, 3px); }
+      60% { transform: translate(3px, -3px); }
+      70% { transform: translate(-2px, 2px); }
+      80% { transform: translate(2px, -1px); }
+      90% { transform: translate(-1px, 1px); }
+      100%{ transform: translate(0, 0); }
+    }
   </style>
 </head>
 <body class="min-h-screen flex items-center justify-center relative">
@@ -89,11 +107,12 @@
   </div>
 
   <!-- Main Content -->
-  <div class="relative text-center px-6" style="z-index: 10;">
-    <h1 class="hero-title text-7xl md:text-9xl font-bold tracking-tighter mb-6">
+  <div id="heroContent" class="relative text-center px-6" style="z-index: 10;">
+    <h1 id="heroTitle" class="hero-title text-7xl md:text-9xl font-bold tracking-tighter mb-2">
       TaleyaLabs
     </h1>
-    <p class="tagline text-2xl md:text-3xl mb-6 tracking-widest">
+    <div id="roosterGap" class="h-24 md:h-32"></div>
+    <p id="heroTagline" class="tagline text-2xl md:text-3xl mb-6 tracking-widest">
       Design &bull; Develop &bull; Deploy
     </p>
   </div>
@@ -123,7 +142,7 @@
 
   <script>
     // ════════════════════════════════════════════
-    // STARFIELD — WebGL-grade canvas star system
+    // STARFIELD — Canvas star system
     // ════════════════════════════════════════════
     const canvas = document.getElementById('starfield');
     const ctx = canvas.getContext('2d');
@@ -137,7 +156,6 @@
     resize();
     window.addEventListener('resize', resize);
 
-    // Track mouse for parallax + glow
     document.addEventListener('mousemove', (e) => {
       mouse.x = e.clientX;
       mouse.y = e.clientY;
@@ -146,56 +164,41 @@
       glow.style.top  = e.clientY + 'px';
     });
 
-    // ── Star classes ──
+    // ── Stars ──
     class Star {
       constructor(layer) {
-        this.layer = layer;    // 0=far, 1=mid, 2=near
+        this.layer = layer;
         this.reset();
       }
-
       reset() {
         this.x = Math.random() * W;
         this.y = Math.random() * H;
         this.baseSize = this.layer === 0 ? 0.5 + Math.random() * 0.8
                       : this.layer === 1 ? 1.0 + Math.random() * 1.2
                       :                    1.5 + Math.random() * 2.0;
-        this.speed = this.layer === 0 ? 0.05
-                   : this.layer === 1 ? 0.15
-                   :                    0.35;
-        this.parallax = this.layer === 0 ? 0.015
-                      : this.layer === 1 ? 0.04
-                      :                    0.08;
+        this.speed = this.layer === 0 ? 0.05 : this.layer === 1 ? 0.15 : 0.35;
+        this.parallax = this.layer === 0 ? 0.015 : this.layer === 1 ? 0.04 : 0.08;
         this.twinkleSpeed = 0.5 + Math.random() * 2;
         this.twinkleOffset = Math.random() * Math.PI * 2;
-        this.hue = Math.random() < 0.6 ? 185 + Math.random() * 10   // cyan
-                 : Math.random() < 0.8 ? 280 + Math.random() * 20   // purple/magenta
-                 :                        0;                          // white
+        this.hue = Math.random() < 0.6 ? 185 + Math.random() * 10
+                 : Math.random() < 0.8 ? 280 + Math.random() * 20 : 0;
         this.saturation = this.hue === 0 ? 0 : 60 + Math.random() * 40;
       }
-
       update(t) {
-        // Drift upward slowly
         this.y -= this.speed;
         if (this.y < -10) { this.y = H + 10; this.x = Math.random() * W; }
-
-        // Parallax from mouse
         const dx = (mouse.x - W / 2) * this.parallax;
         const dy = (mouse.y - H / 2) * this.parallax;
         this.drawX = this.x + dx;
         this.drawY = this.y + dy;
-
-        // Twinkle
         this.alpha = 0.4 + 0.6 * (0.5 + 0.5 * Math.sin(t * this.twinkleSpeed + this.twinkleOffset));
         this.size = this.baseSize * (0.8 + 0.4 * Math.sin(t * this.twinkleSpeed * 0.7 + this.twinkleOffset));
       }
-
       draw() {
         ctx.beginPath();
         ctx.arc(this.drawX, this.drawY, this.size, 0, Math.PI * 2);
         ctx.fillStyle = `hsla(${this.hue}, ${this.saturation}%, 85%, ${this.alpha})`;
         ctx.fill();
-
-        // Glow for near stars
         if (this.layer === 2 && this.alpha > 0.7) {
           ctx.beginPath();
           ctx.arc(this.drawX, this.drawY, this.size * 4, 0, Math.PI * 2);
@@ -205,31 +208,16 @@
       }
     }
 
-    // ── Comet / Shooting Star ──
+    // ── Comets ──
     class ShootingStar {
       constructor() { this.reset(); this.active = false; }
-
       reset() {
-        // Spawn from any edge — pick a random side
         const side = Math.floor(Math.random() * 4);
         const margin = 50;
-        if (side === 0) {        // top
-          this.x = Math.random() * W;
-          this.y = -margin;
-          this.angle = Math.PI / 6 + Math.random() * Math.PI / 3;  // downward
-        } else if (side === 1) { // right
-          this.x = W + margin;
-          this.y = Math.random() * H * 0.7;
-          this.angle = Math.PI * 0.6 + Math.random() * Math.PI / 3;  // leftward-down
-        } else if (side === 2) { // left
-          this.x = -margin;
-          this.y = Math.random() * H * 0.7;
-          this.angle = -Math.PI / 6 + Math.random() * Math.PI / 3;  // rightward-down
-        } else {                 // bottom-corners (streak upward for variety)
-          this.x = Math.random() < 0.5 ? Math.random() * W * 0.3 : W * 0.7 + Math.random() * W * 0.3;
-          this.y = H + margin;
-          this.angle = -Math.PI / 3 - Math.random() * Math.PI / 4;  // upward
-        }
+        if (side === 0) { this.x = Math.random() * W; this.y = -margin; this.angle = Math.PI / 6 + Math.random() * Math.PI / 3; }
+        else if (side === 1) { this.x = W + margin; this.y = Math.random() * H * 0.7; this.angle = Math.PI * 0.6 + Math.random() * Math.PI / 3; }
+        else if (side === 2) { this.x = -margin; this.y = Math.random() * H * 0.7; this.angle = -Math.PI / 6 + Math.random() * Math.PI / 3; }
+        else { this.x = Math.random() < 0.5 ? Math.random() * W * 0.3 : W * 0.7 + Math.random() * W * 0.3; this.y = H + margin; this.angle = -Math.PI / 3 - Math.random() * Math.PI / 4; }
         this.speed = 14 + Math.random() * 18;
         this.alpha = 1;
         this.decay = 0.004 + Math.random() * 0.003;
@@ -240,129 +228,71 @@
         this.curvature = (Math.random() - 0.5) * 0.002;
         this.currentAngle = this.angle;
       }
-
       update() {
         if (!this.active) return;
         this.currentAngle += this.curvature;
         this.x += Math.cos(this.currentAngle) * this.speed;
         this.y += Math.sin(this.currentAngle) * this.speed;
         this.alpha -= this.decay;
-
-        // Store trail points with size that tapers
         this.trail.push({ x: this.x, y: this.y, a: this.alpha, s: this.headSize });
         if (this.trail.length > this.maxTrail) this.trail.shift();
-        if (this.alpha <= 0 || this.x > W + 100 || this.y > H + 100) this.active = false;
+        if (this.alpha <= 0 || this.x > W + 100 || this.y > H + 100 || this.x < -100 || this.y < -100) this.active = false;
       }
-
       draw() {
         if (!this.active || this.trail.length < 2) return;
-
-        // ── Outer glow streak (wide, faint) ──
         ctx.beginPath();
         ctx.moveTo(this.trail[0].x, this.trail[0].y);
-        for (let i = 1; i < this.trail.length; i++) {
-          ctx.lineTo(this.trail[i].x, this.trail[i].y);
-        }
+        for (let i = 1; i < this.trail.length; i++) ctx.lineTo(this.trail[i].x, this.trail[i].y);
         ctx.strokeStyle = `rgba(103, 232, 249, ${this.alpha * 0.07})`;
-        ctx.lineWidth = 45;
-        ctx.lineCap = 'round';
-        ctx.stroke();
-
-        // ── Mid glow streak ──
+        ctx.lineWidth = 45; ctx.lineCap = 'round'; ctx.stroke();
         ctx.beginPath();
         ctx.moveTo(this.trail[0].x, this.trail[0].y);
-        for (let i = 1; i < this.trail.length; i++) {
-          ctx.lineTo(this.trail[i].x, this.trail[i].y);
-        }
+        for (let i = 1; i < this.trail.length; i++) ctx.lineTo(this.trail[i].x, this.trail[i].y);
         ctx.strokeStyle = `rgba(103, 232, 249, ${this.alpha * 0.18})`;
-        ctx.lineWidth = 16;
-        ctx.lineCap = 'round';
-        ctx.stroke();
-
-        // ── Core trail (thin, bright, tapering) ──
+        ctx.lineWidth = 16; ctx.lineCap = 'round'; ctx.stroke();
         for (let i = 1; i < this.trail.length; i++) {
-          const t = this.trail[i];
-          const prev = this.trail[i - 1];
-          const pct = i / this.trail.length;  // 0 at tail, 1 at head
-
-          ctx.beginPath();
-          ctx.moveTo(prev.x, prev.y);
-          ctx.lineTo(t.x, t.y);
-
-          // Gradient from magenta at tail to cyan to white at head
-          const r = Math.round(103 + (255 - 103) * pct * pct);
-          const g = Math.round(232 + (255 - 232) * pct * pct);
-          const b = Math.round(249 + (255 - 249) * pct * pct);
-          ctx.strokeStyle = `rgba(${r}, ${g}, ${b}, ${t.a * pct})`;
-          ctx.lineWidth = 1.5 + pct * 4;
-          ctx.lineCap = 'round';
-          ctx.stroke();
+          const pt = this.trail[i], prev = this.trail[i-1], pct = i / this.trail.length;
+          ctx.beginPath(); ctx.moveTo(prev.x, prev.y); ctx.lineTo(pt.x, pt.y);
+          const r = Math.round(103 + (255-103)*pct*pct), g = Math.round(232 + (255-232)*pct*pct), b = Math.round(249 + (255-249)*pct*pct);
+          ctx.strokeStyle = `rgba(${r},${g},${b}, ${pt.a * pct})`;
+          ctx.lineWidth = 1.5 + pct * 4; ctx.lineCap = 'round'; ctx.stroke();
         }
-
-        // ── Sparkling debris particles along trail ──
         for (let i = 0; i < this.trail.length; i += 4) {
-          const t = this.trail[i];
-          const pct = i / this.trail.length;
+          const pt = this.trail[i], pct = i / this.trail.length;
           if (Math.random() > 0.6) {
-            const offsetX = (Math.random() - 0.5) * 12;
-            const offsetY = (Math.random() - 0.5) * 12;
             ctx.beginPath();
-            ctx.arc(t.x + offsetX, t.y + offsetY, 0.5 + Math.random() * 1, 0, Math.PI * 2);
-            ctx.fillStyle = `rgba(192, 200, 255, ${t.a * pct * 0.6})`;
-            ctx.fill();
+            ctx.arc(pt.x + (Math.random()-0.5)*12, pt.y + (Math.random()-0.5)*12, 0.5+Math.random(), 0, Math.PI*2);
+            ctx.fillStyle = `rgba(192, 200, 255, ${pt.a * pct * 0.6})`; ctx.fill();
           }
         }
-
-        // ── Comet head — blazing bright ──
-        // Outer corona
-        ctx.beginPath();
-        ctx.arc(this.x, this.y, this.headSize * 8, 0, Math.PI * 2);
-        ctx.fillStyle = `rgba(103, 232, 249, ${this.alpha * 0.06})`;
-        ctx.fill();
-
-        // Mid glow
-        ctx.beginPath();
-        ctx.arc(this.x, this.y, this.headSize * 4, 0, Math.PI * 2);
-        ctx.fillStyle = `rgba(103, 232, 249, ${this.alpha * 0.15})`;
-        ctx.fill();
-
-        // Inner glow
-        ctx.beginPath();
-        ctx.arc(this.x, this.y, this.headSize * 2, 0, Math.PI * 2);
-        ctx.fillStyle = `rgba(180, 240, 255, ${this.alpha * 0.4})`;
-        ctx.fill();
-
-        // White-hot core
-        ctx.beginPath();
-        ctx.arc(this.x, this.y, this.headSize, 0, Math.PI * 2);
-        ctx.fillStyle = `rgba(255, 255, 255, ${this.alpha * 0.95})`;
-        ctx.fill();
+        ctx.beginPath(); ctx.arc(this.x, this.y, this.headSize * 8, 0, Math.PI*2);
+        ctx.fillStyle = `rgba(103,232,249, ${this.alpha*0.06})`; ctx.fill();
+        ctx.beginPath(); ctx.arc(this.x, this.y, this.headSize * 4, 0, Math.PI*2);
+        ctx.fillStyle = `rgba(103,232,249, ${this.alpha*0.15})`; ctx.fill();
+        ctx.beginPath(); ctx.arc(this.x, this.y, this.headSize * 2, 0, Math.PI*2);
+        ctx.fillStyle = `rgba(180,240,255, ${this.alpha*0.4})`; ctx.fill();
+        ctx.beginPath(); ctx.arc(this.x, this.y, this.headSize, 0, Math.PI*2);
+        ctx.fillStyle = `rgba(255,255,255, ${this.alpha*0.95})`; ctx.fill();
       }
     }
 
     // ── Nebula clouds ──
     class Nebula {
       constructor() {
-        this.x = Math.random() * W;
-        this.y = Math.random() * H;
+        this.x = Math.random() * W; this.y = Math.random() * H;
         this.radius = 150 + Math.random() * 250;
         this.hue = Math.random() < 0.5 ? 190 : 285;
-        this.driftX = (Math.random() - 0.5) * 0.1;
-        this.driftY = (Math.random() - 0.5) * 0.05;
-        this.pulseSpeed = 0.3 + Math.random() * 0.3;
-        this.pulseOffset = Math.random() * Math.PI * 2;
+        this.driftX = (Math.random()-0.5)*0.1; this.driftY = (Math.random()-0.5)*0.05;
+        this.pulseSpeed = 0.3 + Math.random()*0.3; this.pulseOffset = Math.random()*Math.PI*2;
       }
-
       update(t) {
-        this.x += this.driftX;
-        this.y += this.driftY;
+        this.x += this.driftX; this.y += this.driftY;
         if (this.x < -this.radius) this.x = W + this.radius;
         if (this.x > W + this.radius) this.x = -this.radius;
         if (this.y < -this.radius) this.y = H + this.radius;
         if (this.y > H + this.radius) this.y = -this.radius;
         this.alpha = 0.02 + 0.015 * Math.sin(t * this.pulseSpeed + this.pulseOffset);
       }
-
       draw() {
         const grad = ctx.createRadialGradient(this.x, this.y, 0, this.x, this.y, this.radius);
         grad.addColorStop(0, `hsla(${this.hue}, 80%, 50%, ${this.alpha})`);
@@ -373,320 +303,279 @@
       }
     }
 
-    // ── Cosmic Rooster — materializes from the void, then explodes into neon ──
+    // ══════════════════════════════════════════════════════
+    // COSMIC ROOSTER — Rocket-shaped with rooster head
+    // Materializes from void, explodes into neon comets
+    // ══════════════════════════════════════════════════════
     class CosmicRooster {
       constructor() {
-        this.cycleDuration = 28;  // seconds for full cycle
-        this.explosionStart = 0.85; // 85% through = ~24s approach, ~4s explosion
-        this.particles = [];
+        this.cycleDuration = 28;
+        this.explosionStart = 0.85;
+        this.explosionComets = [];
         this.startTime = 0;
-        this.phase = 'approaching'; // 'approaching' | 'exploding' | 'fading' | 'waiting'
+        this.phase = 'approaching';
         this.waitUntil = 0;
+        this.cx = 0;
+        this.cy = 0;
       }
 
-      // Draw a rooster silhouette as a path at given scale and alpha
+      getPosition() {
+        const gap = document.getElementById('roosterGap');
+        if (gap) {
+          const rect = gap.getBoundingClientRect();
+          this.cx = rect.left + rect.width / 2;
+          this.cy = rect.top + rect.height / 2;
+        } else {
+          this.cx = W / 2;
+          this.cy = H / 2;
+        }
+      }
+
       drawRooster(cx, cy, scale, alpha, t) {
         ctx.save();
         ctx.translate(cx, cy);
         ctx.scale(scale, scale);
 
-        // Rooster faces right, drawn centered at 0,0
-        // Total silhouette roughly 100x120 units
-
-        // ── Body ──
-        ctx.beginPath();
-        ctx.ellipse(0, 10, 30, 22, 0, 0, Math.PI * 2);
-        const bodyGrad = ctx.createRadialGradient(0, 10, 0, 0, 10, 30);
-        bodyGrad.addColorStop(0, `rgba(103, 232, 249, ${alpha * 0.6})`);
-        bodyGrad.addColorStop(1, `rgba(192, 38, 211, ${alpha * 0.2})`);
-        ctx.fillStyle = bodyGrad;
-        ctx.fill();
-
-        // ── Neck ──
-        ctx.beginPath();
-        ctx.ellipse(22, -8, 12, 18, 0.3, 0, Math.PI * 2);
-        const neckGrad = ctx.createRadialGradient(22, -8, 0, 22, -8, 14);
-        neckGrad.addColorStop(0, `rgba(103, 232, 249, ${alpha * 0.5})`);
-        neckGrad.addColorStop(1, `rgba(140, 80, 220, ${alpha * 0.2})`);
-        ctx.fillStyle = neckGrad;
-        ctx.fill();
-
-        // ── Head ──
-        ctx.beginPath();
-        ctx.arc(30, -24, 10, 0, Math.PI * 2);
-        ctx.fillStyle = `rgba(103, 232, 249, ${alpha * 0.7})`;
-        ctx.fill();
-
-        // ── Beak ──
-        ctx.beginPath();
-        ctx.moveTo(40, -26);
-        ctx.lineTo(48, -22);
-        ctx.lineTo(40, -20);
-        ctx.closePath();
-        ctx.fillStyle = `rgba(255, 200, 50, ${alpha * 0.8})`;
-        ctx.fill();
-
-        // ── Eye ──
-        ctx.beginPath();
-        ctx.arc(33, -26, 2, 0, Math.PI * 2);
-        ctx.fillStyle = `rgba(255, 255, 255, ${alpha * 0.9})`;
-        ctx.fill();
-
-        // ── Comb (on top of head) ──
-        ctx.beginPath();
-        ctx.moveTo(24, -34);
-        ctx.quadraticCurveTo(27, -46, 30, -38);
-        ctx.quadraticCurveTo(32, -48, 35, -36);
-        ctx.quadraticCurveTo(37, -44, 38, -32);
-        ctx.lineTo(24, -32);
-        ctx.closePath();
-        const combGrad = ctx.createLinearGradient(24, -48, 38, -32);
-        combGrad.addColorStop(0, `rgba(255, 50, 100, ${alpha * 0.8})`);
-        combGrad.addColorStop(1, `rgba(192, 38, 211, ${alpha * 0.6})`);
-        ctx.fillStyle = combGrad;
-        ctx.fill();
-
-        // ── Wattle (under beak) ──
-        ctx.beginPath();
-        ctx.ellipse(36, -14, 4, 6, 0.2, 0, Math.PI * 2);
-        ctx.fillStyle = `rgba(255, 60, 80, ${alpha * 0.7})`;
-        ctx.fill();
-
-        // ── Tail feathers (flowing left) ──
-        const featherColors = [
-          [103, 232, 249],  // cyan
-          [192, 38, 211],   // magenta
-          [80, 200, 255],   // light blue
-          [255, 100, 200],  // pink
-          [120, 255, 180],  // green
-        ];
+        // Exhaust flames
+        const flameColors = [[103,232,249],[192,38,211],[255,100,200]];
         for (let i = 0; i < 5; i++) {
-          const angle = -0.4 + i * 0.25;
-          const len = 45 + i * 8;
-          const sway = Math.sin(t * 2 + i * 0.8) * 5;
+          const flicker = Math.sin(t * 12 + i * 1.5) * 8;
+          const spread = (i - 2) * 6;
+          const len = 30 + Math.random() * 15 + flicker;
           ctx.beginPath();
-          ctx.moveTo(-25, 5);
-          const cpX = -25 - Math.cos(angle) * len * 0.6 + sway;
-          const cpY = 5 + Math.sin(angle) * len * 0.4;
-          const endX = -25 - Math.cos(angle) * len + sway * 1.5;
-          const endY = 5 + Math.sin(angle) * len * 0.5 - 20;
-          ctx.quadraticCurveTo(cpX, cpY, endX, endY);
-          ctx.strokeStyle = `rgba(${featherColors[i][0]}, ${featherColors[i][1]}, ${featherColors[i][2]}, ${alpha * 0.7})`;
-          ctx.lineWidth = 3 - i * 0.3;
-          ctx.lineCap = 'round';
-          ctx.stroke();
-
-          // Feather glow
-          ctx.strokeStyle = `rgba(${featherColors[i][0]}, ${featherColors[i][1]}, ${featherColors[i][2]}, ${alpha * 0.15})`;
-          ctx.lineWidth = 8;
-          ctx.stroke();
+          ctx.moveTo(spread - 3, 35);
+          ctx.quadraticCurveTo(spread + (Math.random()-0.5)*8, 35 + len*0.6, spread, 35 + len);
+          const fc = flameColors[i % flameColors.length];
+          ctx.strokeStyle = `rgba(${fc[0]},${fc[1]},${fc[2]}, ${alpha * 0.6})`;
+          ctx.lineWidth = 3; ctx.lineCap = 'round'; ctx.stroke();
+          ctx.strokeStyle = `rgba(${fc[0]},${fc[1]},${fc[2]}, ${alpha * 0.1})`;
+          ctx.lineWidth = 10; ctx.stroke();
         }
 
-        // ── Legs ──
+        // Rocket body
         ctx.beginPath();
-        ctx.moveTo(5, 30);
-        ctx.lineTo(5, 45);
-        ctx.lineTo(-2, 50);
-        ctx.moveTo(5, 45);
-        ctx.lineTo(10, 50);
-        ctx.moveTo(-8, 28);
-        ctx.lineTo(-8, 42);
-        ctx.lineTo(-15, 47);
-        ctx.moveTo(-8, 42);
-        ctx.lineTo(-3, 47);
-        ctx.strokeStyle = `rgba(255, 200, 50, ${alpha * 0.5})`;
-        ctx.lineWidth = 1.5;
-        ctx.stroke();
+        ctx.moveTo(0, -40);
+        ctx.quadraticCurveTo(22, -20, 20, 15);
+        ctx.quadraticCurveTo(18, 30, 12, 35);
+        ctx.lineTo(-12, 35);
+        ctx.quadraticCurveTo(-18, 30, -20, 15);
+        ctx.quadraticCurveTo(-22, -20, 0, -40);
+        ctx.closePath();
+        const bodyGrad = ctx.createLinearGradient(0, -40, 0, 35);
+        bodyGrad.addColorStop(0, `rgba(103,232,249, ${alpha*0.7})`);
+        bodyGrad.addColorStop(0.5, `rgba(140,100,230, ${alpha*0.5})`);
+        bodyGrad.addColorStop(1, `rgba(192,38,211, ${alpha*0.4})`);
+        ctx.fillStyle = bodyGrad; ctx.fill();
+        ctx.strokeStyle = `rgba(103,232,249, ${alpha*0.4})`; ctx.lineWidth = 1.5; ctx.stroke();
 
-        // ── Outer glow around entire rooster ──
+        // Fins
+        ctx.beginPath(); ctx.moveTo(-14, 25); ctx.lineTo(-30, 40); ctx.lineTo(-10, 35); ctx.closePath();
+        ctx.fillStyle = `rgba(192,38,211, ${alpha*0.6})`; ctx.fill();
+        ctx.beginPath(); ctx.moveTo(14, 25); ctx.lineTo(30, 40); ctx.lineTo(10, 35); ctx.closePath();
+        ctx.fillStyle = `rgba(192,38,211, ${alpha*0.6})`; ctx.fill();
+
+        // Cockpit window
+        ctx.beginPath(); ctx.ellipse(0, -5, 8, 12, 0, 0, Math.PI*2);
+        ctx.fillStyle = `rgba(20,20,40, ${alpha*0.6})`; ctx.fill();
+        ctx.strokeStyle = `rgba(103,232,249, ${alpha*0.5})`; ctx.lineWidth = 1; ctx.stroke();
+
+        // Rooster head
+        ctx.beginPath(); ctx.arc(0, -48, 12, 0, Math.PI*2);
+        const headGrad = ctx.createRadialGradient(0, -48, 0, 0, -48, 12);
+        headGrad.addColorStop(0, `rgba(103,232,249, ${alpha*0.8})`);
+        headGrad.addColorStop(1, `rgba(80,180,230, ${alpha*0.5})`);
+        ctx.fillStyle = headGrad; ctx.fill();
+
+        // Comb
         ctx.beginPath();
-        ctx.ellipse(5, 0, 55, 45, 0, 0, Math.PI * 2);
-        const glowGrad = ctx.createRadialGradient(5, 0, 10, 5, 0, 55);
-        glowGrad.addColorStop(0, `rgba(103, 232, 249, ${alpha * 0.05})`);
+        ctx.moveTo(-6, -60); ctx.quadraticCurveTo(-3, -74, 0, -64);
+        ctx.quadraticCurveTo(2, -76, 4, -62); ctx.quadraticCurveTo(6, -72, 8, -58);
+        ctx.lineTo(-6, -58); ctx.closePath();
+        const combGrad = ctx.createLinearGradient(-6, -76, 8, -58);
+        combGrad.addColorStop(0, `rgba(255,50,100, ${alpha*0.9})`);
+        combGrad.addColorStop(1, `rgba(192,38,211, ${alpha*0.7})`);
+        ctx.fillStyle = combGrad; ctx.fill();
+
+        // Beak
+        ctx.beginPath(); ctx.moveTo(12,-50); ctx.lineTo(20,-46); ctx.lineTo(12,-44); ctx.closePath();
+        ctx.fillStyle = `rgba(255,200,50, ${alpha*0.9})`; ctx.fill();
+
+        // Wattle
+        ctx.beginPath(); ctx.ellipse(13, -40, 3, 5, 0.2, 0, Math.PI*2);
+        ctx.fillStyle = `rgba(255,60,80, ${alpha*0.7})`; ctx.fill();
+
+        // Eye
+        ctx.beginPath(); ctx.arc(4, -50, 2.5, 0, Math.PI*2);
+        ctx.fillStyle = `rgba(255,255,255, ${alpha*0.95})`; ctx.fill();
+        ctx.beginPath(); ctx.arc(4.5, -50, 1, 0, Math.PI*2);
+        ctx.fillStyle = `rgba(0,0,0, ${alpha*0.9})`; ctx.fill();
+
+        // Tail feathers streaming from base
+        const featherColors = [[103,232,249],[192,38,211],[80,200,255],[255,100,200]];
+        for (let i = 0; i < 4; i++) {
+          const spread = (i - 1.5) * 10;
+          const sway = Math.sin(t * 3 + i * 1.2) * 6;
+          const len = 25 + i * 5;
+          ctx.beginPath(); ctx.moveTo(spread, 35);
+          ctx.quadraticCurveTo(spread+sway, 35+len*0.6, spread+sway*1.5, 35+len);
+          ctx.strokeStyle = `rgba(${featherColors[i][0]},${featherColors[i][1]},${featherColors[i][2]}, ${alpha*0.5})`;
+          ctx.lineWidth = 2.5; ctx.lineCap = 'round'; ctx.stroke();
+          ctx.strokeStyle = `rgba(${featherColors[i][0]},${featherColors[i][1]},${featherColors[i][2]}, ${alpha*0.1})`;
+          ctx.lineWidth = 7; ctx.stroke();
+        }
+
+        // Outer glow
+        ctx.beginPath(); ctx.ellipse(0, -5, 35, 55, 0, 0, Math.PI*2);
+        const glowGrad = ctx.createRadialGradient(0, -5, 5, 0, -5, 55);
+        glowGrad.addColorStop(0, `rgba(103,232,249, ${alpha*0.06})`);
         glowGrad.addColorStop(1, 'transparent');
-        ctx.fillStyle = glowGrad;
-        ctx.fill();
+        ctx.fillStyle = glowGrad; ctx.fill();
 
         ctx.restore();
       }
 
-      // Generate explosion particles from the rooster's position
-      explode(cx, cy, finalScale) {
-        this.particles = [];
-        const colors = [
-          [103, 232, 249],  // cyan
-          [192, 38, 211],   // magenta
-          [255, 100, 200],  // pink
-          [80, 255, 180],   // green
-          [255, 200, 50],   // gold
-          [120, 180, 255],  // light blue
-          [255, 60, 80],    // red
-          [200, 130, 255],  // lavender
-        ];
-        for (let i = 0; i < 200; i++) {
-          const angle = Math.random() * Math.PI * 2;
-          const speed = 2 + Math.random() * 8;
+      explode(cx, cy) {
+        this.explosionComets = [];
+        const colors = [[103,232,249],[192,38,211],[255,100,200],[80,255,180],[255,200,50],[120,180,255],[255,60,80],[200,130,255]];
+        // 35 mini-comets radiating outward like the screen comets
+        for (let i = 0; i < 35; i++) {
+          const angle = (Math.PI * 2 * i / 35) + (Math.random() - 0.5) * 0.3;
+          const speed = 8 + Math.random() * 14;
           const color = colors[Math.floor(Math.random() * colors.length)];
-          this.particles.push({
-            x: cx,
-            y: cy,
-            vx: Math.cos(angle) * speed * (0.5 + Math.random()),
-            vy: Math.sin(angle) * speed * (0.5 + Math.random()),
-            size: 1.5 + Math.random() * 3.5,
+          this.explosionComets.push({
+            x: cx, y: cy,
+            vx: Math.cos(angle) * speed,
+            vy: Math.sin(angle) * speed,
+            trail: [],
+            maxTrail: 50 + Math.floor(Math.random() * 30),
+            headSize: 2.5 + Math.random() * 3,
             alpha: 1,
-            decay: 0.008 + Math.random() * 0.012,
+            decay: 0.005 + Math.random() * 0.005,
             color: color,
-            drag: 0.98,
-            // Some particles are "feather" shaped — elongated
-            isFeather: Math.random() < 0.15,
-            rotation: Math.random() * Math.PI * 2,
-            rotSpeed: (Math.random() - 0.5) * 0.2,
+            drag: 0.987,
+            curvature: (Math.random() - 0.5) * 0.003,
+            currentAngle: angle,
           });
         }
+        // Screen shake via CSS
+        document.body.classList.add('shaking');
+        setTimeout(() => document.body.classList.remove('shaking'), 600);
       }
 
       update(t) {
         if (this.phase === 'waiting') {
-          if (t >= this.waitUntil) {
-            this.phase = 'approaching';
-            this.startTime = t;
-          }
+          if (t >= this.waitUntil) { this.phase = 'approaching'; this.startTime = t; }
           return;
         }
-
         const elapsed = t - this.startTime;
         const progress = Math.min(elapsed / this.cycleDuration, 1);
+        this.getPosition();
 
         if (this.phase === 'approaching' && progress >= this.explosionStart) {
-          // Trigger explosion
           this.phase = 'exploding';
-          // Origin point: center-ish, slightly right (above the "a")
-          const cx = W * 0.5;
-          const cy = H * 0.5;
-          const finalScale = this.getFinalScale();
-          this.explode(cx, cy, finalScale);
+          this.explode(this.cx, this.cy);
           this.explosionTime = t;
         }
 
         if (this.phase === 'exploding') {
           let allDead = true;
-          for (const p of this.particles) {
-            p.x += p.vx;
-            p.y += p.vy;
-            p.vx *= p.drag;
-            p.vy *= p.drag;
-            p.vy += 0.02; // slight gravity
-            p.alpha -= p.decay;
-            if (p.isFeather) p.rotation += p.rotSpeed;
-            if (p.alpha > 0) allDead = false;
+          for (const c of this.explosionComets) {
+            if (c.alpha <= 0) continue;
+            c.currentAngle += c.curvature;
+            c.vx *= c.drag; c.vy *= c.drag;
+            c.x += c.vx; c.y += c.vy;
+            c.alpha -= c.decay;
+            c.trail.push({ x: c.x, y: c.y, a: c.alpha });
+            if (c.trail.length > c.maxTrail) c.trail.shift();
+            if (c.alpha > 0) allDead = false;
           }
           if (allDead) {
             this.phase = 'waiting';
-            this.waitUntil = t + 2 + Math.random() * 2; // 2-4 second pause before next cycle
+            this.waitUntil = t + 2 + Math.random() * 2;
           }
         }
       }
 
-      getFinalScale() {
-        // Half the hero font size. Hero is ~9rem on desktop ≈ 144px.
-        // Rooster silhouette is ~100 units tall. Scale to ~72px = 0.72
-        return Math.min(W, H) < 768 ? 0.5 : 0.72;
-      }
+      getFinalScale() { return Math.min(W, H) < 768 ? 0.55 : 0.8; }
 
       draw(t) {
         if (this.phase === 'waiting') return;
-
         const elapsed = t - this.startTime;
         const progress = Math.min(elapsed / this.cycleDuration, 1);
 
         if (this.phase === 'approaching') {
-          // Origin above the "a" in TaleyaLabs
-          const cx = W * 0.5;
-          const cy = H * 0.5;
-
-          // Scale: starts tiny (far away), grows to final size
           const approachProgress = progress / this.explosionStart;
-          // Ease-in-out cubic for natural approach
           const eased = approachProgress < 0.5
             ? 4 * approachProgress * approachProgress * approachProgress
             : 1 - Math.pow(-2 * approachProgress + 2, 3) / 2;
-
-          const minScale = 0.02;
-          const maxScale = this.getFinalScale();
-          const scale = minScale + (maxScale - minScale) * eased;
-
-          // Alpha: starts very faint, becomes clearer
+          const scale = 0.02 + (this.getFinalScale() - 0.02) * eased;
           const alpha = 0.05 + 0.85 * eased;
+          const driftY = (1 - eased) * -60;
+          this.drawRooster(this.cx, this.cy + driftY, scale, alpha, t);
 
-          // Slight vertical drift — starts higher, drifts down to center
-          const driftY = (1 - eased) * -80;
-
-          this.drawRooster(cx, cy + driftY, scale, alpha, t);
-
-          // Approaching glow that intensifies
           if (eased > 0.7) {
             const glowAlpha = (eased - 0.7) / 0.3;
             ctx.beginPath();
-            ctx.arc(cx, cy + driftY, 60 * scale, 0, Math.PI * 2);
-            const grd = ctx.createRadialGradient(cx, cy + driftY, 0, cx, cy + driftY, 60 * scale);
-            grd.addColorStop(0, `rgba(103, 232, 249, ${glowAlpha * 0.15})`);
-            grd.addColorStop(0.5, `rgba(192, 38, 211, ${glowAlpha * 0.08})`);
+            ctx.arc(this.cx, this.cy + driftY, 70 * scale, 0, Math.PI*2);
+            const grd = ctx.createRadialGradient(this.cx, this.cy+driftY, 0, this.cx, this.cy+driftY, 70*scale);
+            grd.addColorStop(0, `rgba(103,232,249, ${glowAlpha*0.2})`);
+            grd.addColorStop(0.5, `rgba(192,38,211, ${glowAlpha*0.1})`);
             grd.addColorStop(1, 'transparent');
-            ctx.fillStyle = grd;
-            ctx.fill();
+            ctx.fillStyle = grd; ctx.fill();
           }
         }
 
         if (this.phase === 'exploding') {
-          // Draw particles
-          for (const p of this.particles) {
-            if (p.alpha <= 0) continue;
+          // Draw each explosion comet with full trail (matching screen comets)
+          for (const c of this.explosionComets) {
+            if (c.alpha <= 0 || c.trail.length < 2) continue;
 
-            if (p.isFeather) {
-              // Elongated feather particle
-              ctx.save();
-              ctx.translate(p.x, p.y);
-              ctx.rotate(p.rotation);
-              ctx.beginPath();
-              ctx.ellipse(0, 0, p.size * 3, p.size * 0.8, 0, 0, Math.PI * 2);
-              ctx.fillStyle = `rgba(${p.color[0]}, ${p.color[1]}, ${p.color[2]}, ${p.alpha * 0.8})`;
-              ctx.fill();
-              // Feather glow
-              ctx.beginPath();
-              ctx.ellipse(0, 0, p.size * 5, p.size * 2, 0, 0, Math.PI * 2);
-              ctx.fillStyle = `rgba(${p.color[0]}, ${p.color[1]}, ${p.color[2]}, ${p.alpha * 0.1})`;
-              ctx.fill();
-              ctx.restore();
-            } else {
-              // Round particle
-              ctx.beginPath();
-              ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
-              ctx.fillStyle = `rgba(${p.color[0]}, ${p.color[1]}, ${p.color[2]}, ${p.alpha})`;
-              ctx.fill();
-              // Glow
-              ctx.beginPath();
-              ctx.arc(p.x, p.y, p.size * 3, 0, Math.PI * 2);
-              ctx.fillStyle = `rgba(${p.color[0]}, ${p.color[1]}, ${p.color[2]}, ${p.alpha * 0.15})`;
-              ctx.fill();
+            // Wide outer glow
+            ctx.beginPath();
+            ctx.moveTo(c.trail[0].x, c.trail[0].y);
+            for (let i = 1; i < c.trail.length; i++) ctx.lineTo(c.trail[i].x, c.trail[i].y);
+            ctx.strokeStyle = `rgba(${c.color[0]},${c.color[1]},${c.color[2]}, ${c.alpha * 0.06})`;
+            ctx.lineWidth = 25; ctx.lineCap = 'round'; ctx.stroke();
+
+            // Mid glow
+            ctx.beginPath();
+            ctx.moveTo(c.trail[0].x, c.trail[0].y);
+            for (let i = 1; i < c.trail.length; i++) ctx.lineTo(c.trail[i].x, c.trail[i].y);
+            ctx.strokeStyle = `rgba(${c.color[0]},${c.color[1]},${c.color[2]}, ${c.alpha * 0.18})`;
+            ctx.lineWidth = 10; ctx.lineCap = 'round'; ctx.stroke();
+
+            // Core trail tapering white-hot at head
+            for (let i = 1; i < c.trail.length; i++) {
+              const pt = c.trail[i], prev = c.trail[i-1], pct = i / c.trail.length;
+              ctx.beginPath(); ctx.moveTo(prev.x, prev.y); ctx.lineTo(pt.x, pt.y);
+              const r = Math.round(c.color[0] + (255-c.color[0])*pct*pct);
+              const g = Math.round(c.color[1] + (255-c.color[1])*pct*pct);
+              const b = Math.round(c.color[2] + (255-c.color[2])*pct*pct);
+              ctx.strokeStyle = `rgba(${r},${g},${b}, ${pt.a * pct})`;
+              ctx.lineWidth = 1 + pct * 3.5; ctx.lineCap = 'round'; ctx.stroke();
             }
+
+            // Comet head glow layers
+            ctx.beginPath(); ctx.arc(c.x, c.y, c.headSize * 4, 0, Math.PI*2);
+            ctx.fillStyle = `rgba(${c.color[0]},${c.color[1]},${c.color[2]}, ${c.alpha * 0.1})`; ctx.fill();
+            ctx.beginPath(); ctx.arc(c.x, c.y, c.headSize * 2, 0, Math.PI*2);
+            ctx.fillStyle = `rgba(${c.color[0]},${c.color[1]},${c.color[2]}, ${c.alpha * 0.3})`; ctx.fill();
+            ctx.beginPath(); ctx.arc(c.x, c.y, c.headSize, 0, Math.PI*2);
+            ctx.fillStyle = `rgba(255,255,255, ${c.alpha * 0.9})`; ctx.fill();
           }
 
-          // Central flash right at explosion start
+          // Central flash
           const flashAge = t - this.explosionTime;
-          if (flashAge < 0.5) {
-            const flashAlpha = (1 - flashAge / 0.5) * 0.6;
-            const flashRadius = 30 + flashAge * 300;
-            const cx = W * 0.52;
-            const cy = H * 0.45;
-            ctx.beginPath();
-            ctx.arc(cx, cy, flashRadius, 0, Math.PI * 2);
-            const fGrad = ctx.createRadialGradient(cx, cy, 0, cx, cy, flashRadius);
-            fGrad.addColorStop(0, `rgba(255, 255, 255, ${flashAlpha})`);
-            fGrad.addColorStop(0.3, `rgba(103, 232, 249, ${flashAlpha * 0.5})`);
-            fGrad.addColorStop(0.6, `rgba(192, 38, 211, ${flashAlpha * 0.2})`);
+          if (flashAge < 0.7) {
+            const flashAlpha = (1 - flashAge / 0.7) * 0.8;
+            const flashRadius = 50 + flashAge * 500;
+            ctx.beginPath(); ctx.arc(this.cx, this.cy, flashRadius, 0, Math.PI*2);
+            const fGrad = ctx.createRadialGradient(this.cx, this.cy, 0, this.cx, this.cy, flashRadius);
+            fGrad.addColorStop(0, `rgba(255,255,255, ${flashAlpha})`);
+            fGrad.addColorStop(0.2, `rgba(103,232,249, ${flashAlpha*0.6})`);
+            fGrad.addColorStop(0.5, `rgba(192,38,211, ${flashAlpha*0.25})`);
             fGrad.addColorStop(1, 'transparent');
-            ctx.fillStyle = fGrad;
-            ctx.fill();
+            ctx.fillStyle = fGrad; ctx.fill();
           }
         }
       }
@@ -694,9 +583,9 @@
 
     // ── Initialize ──
     const stars = [];
-    for (let i = 0; i < 300; i++) stars.push(new Star(0));  // far
-    for (let i = 0; i < 150; i++) stars.push(new Star(1));  // mid
-    for (let i = 0; i < 50;  i++) stars.push(new Star(2));  // near
+    for (let i = 0; i < 300; i++) stars.push(new Star(0));
+    for (let i = 0; i < 150; i++) stars.push(new Star(1));
+    for (let i = 0; i < 50;  i++) stars.push(new Star(2));
 
     const nebulae = [];
     for (let i = 0; i < 5; i++) nebulae.push(new Nebula());
@@ -704,7 +593,6 @@
     const rooster = new CosmicRooster();
     rooster.startTime = performance.now() * 0.001;
 
-    // Multiple comets — up to 5 at once, streaking from all directions
     const comets = [];
     for (let i = 0; i < 5; i++) comets.push(new ShootingStar());
     let lastShot = 0;
@@ -715,38 +603,24 @@
       const t = timestamp * 0.001;
       ctx.clearRect(0, 0, W, H);
 
-      // Nebulae first (background)
       for (const n of nebulae) { n.update(t); n.draw(); }
-
-      // Stars
       for (const s of stars) { s.update(t); s.draw(); }
 
-      // Fire comets — stagger launches every 2-5 seconds
       if (t - lastShot > nextInterval) {
         const idle = comets.find(c => !c.active);
-        if (idle) {
-          idle.reset();
-          lastShot = t;
-          nextInterval = 0.8 + Math.random() * 1.5;
-        }
+        if (idle) { idle.reset(); lastShot = t; nextInterval = 0.8 + Math.random() * 1.5; }
       }
-
       for (const c of comets) { c.update(); c.draw(); }
 
-      // Cosmic Rooster — materializes then explodes
       rooster.update(t);
       rooster.draw(t);
 
       requestAnimationFrame(animate);
     }
-
     requestAnimationFrame(animate);
 
-    // ── Menu toggle ──
-    function toggleMenu() {
-      document.getElementById('menu').classList.toggle('hidden');
-    }
-
+    // ── Menu ──
+    function toggleMenu() { document.getElementById('menu').classList.toggle('hidden'); }
     document.addEventListener('keydown', (e) => {
       if (e.key === 'Escape') document.getElementById('menu').classList.add('hidden');
     });
