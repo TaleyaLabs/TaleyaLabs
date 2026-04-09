@@ -108,8 +108,11 @@
     </div>
     <div class="text-center space-y-8 text-2xl text-white">
       <a href="https://travenie.com" class="block hover:text-cyan-400 transition-colors">Travenie</a>
-      <a href="#" class="block hover:text-cyan-400 transition-colors">djïrb</a>
-      <a href="#" class="block hover:text-cyan-400 transition-colors">About Us</a>
+      <a href="#" class="block text-gray-400 relative group cursor-default">djïrb <span class="absolute -bottom-6 left-1/2 -translate-x-1/2 text-xs text-cyan-400 opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">Coming Soon</span></a>
+      <a href="#" class="block hover:text-cyan-400 transition-colors" onclick="event.preventDefault(); document.getElementById('aboutPanel').classList.toggle('hidden');">About Us</a>
+      <div id="aboutPanel" class="hidden mt-2 text-base text-gray-400 max-w-md mx-auto leading-relaxed">
+        Where soul meets system. We build intelligent experiences<br>at the intersection of human intuition and emerging technology.
+      </div>
       <a href="mailto:tech@taleyalabs.com" class="block hover:text-cyan-400 transition-colors">Contact</a>
       <div class="pt-8 text-sm text-gray-500">
         TaleyaLabs LLC<br>
@@ -370,6 +373,325 @@
       }
     }
 
+    // ── Cosmic Rooster — materializes from the void, then explodes into neon ──
+    class CosmicRooster {
+      constructor() {
+        this.cycleDuration = 28;  // seconds for full cycle
+        this.explosionStart = 0.85; // 85% through = ~24s approach, ~4s explosion
+        this.particles = [];
+        this.startTime = 0;
+        this.phase = 'approaching'; // 'approaching' | 'exploding' | 'fading' | 'waiting'
+        this.waitUntil = 0;
+      }
+
+      // Draw a rooster silhouette as a path at given scale and alpha
+      drawRooster(cx, cy, scale, alpha, t) {
+        ctx.save();
+        ctx.translate(cx, cy);
+        ctx.scale(scale, scale);
+
+        // Rooster faces right, drawn centered at 0,0
+        // Total silhouette roughly 100x120 units
+
+        // ── Body ──
+        ctx.beginPath();
+        ctx.ellipse(0, 10, 30, 22, 0, 0, Math.PI * 2);
+        const bodyGrad = ctx.createRadialGradient(0, 10, 0, 0, 10, 30);
+        bodyGrad.addColorStop(0, `rgba(103, 232, 249, ${alpha * 0.6})`);
+        bodyGrad.addColorStop(1, `rgba(192, 38, 211, ${alpha * 0.2})`);
+        ctx.fillStyle = bodyGrad;
+        ctx.fill();
+
+        // ── Neck ──
+        ctx.beginPath();
+        ctx.ellipse(22, -8, 12, 18, 0.3, 0, Math.PI * 2);
+        const neckGrad = ctx.createRadialGradient(22, -8, 0, 22, -8, 14);
+        neckGrad.addColorStop(0, `rgba(103, 232, 249, ${alpha * 0.5})`);
+        neckGrad.addColorStop(1, `rgba(140, 80, 220, ${alpha * 0.2})`);
+        ctx.fillStyle = neckGrad;
+        ctx.fill();
+
+        // ── Head ──
+        ctx.beginPath();
+        ctx.arc(30, -24, 10, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(103, 232, 249, ${alpha * 0.7})`;
+        ctx.fill();
+
+        // ── Beak ──
+        ctx.beginPath();
+        ctx.moveTo(40, -26);
+        ctx.lineTo(48, -22);
+        ctx.lineTo(40, -20);
+        ctx.closePath();
+        ctx.fillStyle = `rgba(255, 200, 50, ${alpha * 0.8})`;
+        ctx.fill();
+
+        // ── Eye ──
+        ctx.beginPath();
+        ctx.arc(33, -26, 2, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(255, 255, 255, ${alpha * 0.9})`;
+        ctx.fill();
+
+        // ── Comb (on top of head) ──
+        ctx.beginPath();
+        ctx.moveTo(24, -34);
+        ctx.quadraticCurveTo(27, -46, 30, -38);
+        ctx.quadraticCurveTo(32, -48, 35, -36);
+        ctx.quadraticCurveTo(37, -44, 38, -32);
+        ctx.lineTo(24, -32);
+        ctx.closePath();
+        const combGrad = ctx.createLinearGradient(24, -48, 38, -32);
+        combGrad.addColorStop(0, `rgba(255, 50, 100, ${alpha * 0.8})`);
+        combGrad.addColorStop(1, `rgba(192, 38, 211, ${alpha * 0.6})`);
+        ctx.fillStyle = combGrad;
+        ctx.fill();
+
+        // ── Wattle (under beak) ──
+        ctx.beginPath();
+        ctx.ellipse(36, -14, 4, 6, 0.2, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(255, 60, 80, ${alpha * 0.7})`;
+        ctx.fill();
+
+        // ── Tail feathers (flowing left) ──
+        const featherColors = [
+          [103, 232, 249],  // cyan
+          [192, 38, 211],   // magenta
+          [80, 200, 255],   // light blue
+          [255, 100, 200],  // pink
+          [120, 255, 180],  // green
+        ];
+        for (let i = 0; i < 5; i++) {
+          const angle = -0.4 + i * 0.25;
+          const len = 45 + i * 8;
+          const sway = Math.sin(t * 2 + i * 0.8) * 5;
+          ctx.beginPath();
+          ctx.moveTo(-25, 5);
+          const cpX = -25 - Math.cos(angle) * len * 0.6 + sway;
+          const cpY = 5 + Math.sin(angle) * len * 0.4;
+          const endX = -25 - Math.cos(angle) * len + sway * 1.5;
+          const endY = 5 + Math.sin(angle) * len * 0.5 - 20;
+          ctx.quadraticCurveTo(cpX, cpY, endX, endY);
+          ctx.strokeStyle = `rgba(${featherColors[i][0]}, ${featherColors[i][1]}, ${featherColors[i][2]}, ${alpha * 0.7})`;
+          ctx.lineWidth = 3 - i * 0.3;
+          ctx.lineCap = 'round';
+          ctx.stroke();
+
+          // Feather glow
+          ctx.strokeStyle = `rgba(${featherColors[i][0]}, ${featherColors[i][1]}, ${featherColors[i][2]}, ${alpha * 0.15})`;
+          ctx.lineWidth = 8;
+          ctx.stroke();
+        }
+
+        // ── Legs ──
+        ctx.beginPath();
+        ctx.moveTo(5, 30);
+        ctx.lineTo(5, 45);
+        ctx.lineTo(-2, 50);
+        ctx.moveTo(5, 45);
+        ctx.lineTo(10, 50);
+        ctx.moveTo(-8, 28);
+        ctx.lineTo(-8, 42);
+        ctx.lineTo(-15, 47);
+        ctx.moveTo(-8, 42);
+        ctx.lineTo(-3, 47);
+        ctx.strokeStyle = `rgba(255, 200, 50, ${alpha * 0.5})`;
+        ctx.lineWidth = 1.5;
+        ctx.stroke();
+
+        // ── Outer glow around entire rooster ──
+        ctx.beginPath();
+        ctx.ellipse(5, 0, 55, 45, 0, 0, Math.PI * 2);
+        const glowGrad = ctx.createRadialGradient(5, 0, 10, 5, 0, 55);
+        glowGrad.addColorStop(0, `rgba(103, 232, 249, ${alpha * 0.05})`);
+        glowGrad.addColorStop(1, 'transparent');
+        ctx.fillStyle = glowGrad;
+        ctx.fill();
+
+        ctx.restore();
+      }
+
+      // Generate explosion particles from the rooster's position
+      explode(cx, cy, finalScale) {
+        this.particles = [];
+        const colors = [
+          [103, 232, 249],  // cyan
+          [192, 38, 211],   // magenta
+          [255, 100, 200],  // pink
+          [80, 255, 180],   // green
+          [255, 200, 50],   // gold
+          [120, 180, 255],  // light blue
+          [255, 60, 80],    // red
+          [200, 130, 255],  // lavender
+        ];
+        for (let i = 0; i < 200; i++) {
+          const angle = Math.random() * Math.PI * 2;
+          const speed = 2 + Math.random() * 8;
+          const color = colors[Math.floor(Math.random() * colors.length)];
+          this.particles.push({
+            x: cx,
+            y: cy,
+            vx: Math.cos(angle) * speed * (0.5 + Math.random()),
+            vy: Math.sin(angle) * speed * (0.5 + Math.random()),
+            size: 1.5 + Math.random() * 3.5,
+            alpha: 1,
+            decay: 0.008 + Math.random() * 0.012,
+            color: color,
+            drag: 0.98,
+            // Some particles are "feather" shaped — elongated
+            isFeather: Math.random() < 0.15,
+            rotation: Math.random() * Math.PI * 2,
+            rotSpeed: (Math.random() - 0.5) * 0.2,
+          });
+        }
+      }
+
+      update(t) {
+        if (this.phase === 'waiting') {
+          if (t >= this.waitUntil) {
+            this.phase = 'approaching';
+            this.startTime = t;
+          }
+          return;
+        }
+
+        const elapsed = t - this.startTime;
+        const progress = Math.min(elapsed / this.cycleDuration, 1);
+
+        if (this.phase === 'approaching' && progress >= this.explosionStart) {
+          // Trigger explosion
+          this.phase = 'exploding';
+          // Origin point: center-ish, slightly right (above the "a")
+          const cx = W * 0.5;
+          const cy = H * 0.5;
+          const finalScale = this.getFinalScale();
+          this.explode(cx, cy, finalScale);
+          this.explosionTime = t;
+        }
+
+        if (this.phase === 'exploding') {
+          let allDead = true;
+          for (const p of this.particles) {
+            p.x += p.vx;
+            p.y += p.vy;
+            p.vx *= p.drag;
+            p.vy *= p.drag;
+            p.vy += 0.02; // slight gravity
+            p.alpha -= p.decay;
+            if (p.isFeather) p.rotation += p.rotSpeed;
+            if (p.alpha > 0) allDead = false;
+          }
+          if (allDead) {
+            this.phase = 'waiting';
+            this.waitUntil = t + 2 + Math.random() * 2; // 2-4 second pause before next cycle
+          }
+        }
+      }
+
+      getFinalScale() {
+        // Half the hero font size. Hero is ~9rem on desktop ≈ 144px.
+        // Rooster silhouette is ~100 units tall. Scale to ~72px = 0.72
+        return Math.min(W, H) < 768 ? 0.5 : 0.72;
+      }
+
+      draw(t) {
+        if (this.phase === 'waiting') return;
+
+        const elapsed = t - this.startTime;
+        const progress = Math.min(elapsed / this.cycleDuration, 1);
+
+        if (this.phase === 'approaching') {
+          // Origin above the "a" in TaleyaLabs
+          const cx = W * 0.5;
+          const cy = H * 0.5;
+
+          // Scale: starts tiny (far away), grows to final size
+          const approachProgress = progress / this.explosionStart;
+          // Ease-in-out cubic for natural approach
+          const eased = approachProgress < 0.5
+            ? 4 * approachProgress * approachProgress * approachProgress
+            : 1 - Math.pow(-2 * approachProgress + 2, 3) / 2;
+
+          const minScale = 0.02;
+          const maxScale = this.getFinalScale();
+          const scale = minScale + (maxScale - minScale) * eased;
+
+          // Alpha: starts very faint, becomes clearer
+          const alpha = 0.05 + 0.85 * eased;
+
+          // Slight vertical drift — starts higher, drifts down to center
+          const driftY = (1 - eased) * -80;
+
+          this.drawRooster(cx, cy + driftY, scale, alpha, t);
+
+          // Approaching glow that intensifies
+          if (eased > 0.7) {
+            const glowAlpha = (eased - 0.7) / 0.3;
+            ctx.beginPath();
+            ctx.arc(cx, cy + driftY, 60 * scale, 0, Math.PI * 2);
+            const grd = ctx.createRadialGradient(cx, cy + driftY, 0, cx, cy + driftY, 60 * scale);
+            grd.addColorStop(0, `rgba(103, 232, 249, ${glowAlpha * 0.15})`);
+            grd.addColorStop(0.5, `rgba(192, 38, 211, ${glowAlpha * 0.08})`);
+            grd.addColorStop(1, 'transparent');
+            ctx.fillStyle = grd;
+            ctx.fill();
+          }
+        }
+
+        if (this.phase === 'exploding') {
+          // Draw particles
+          for (const p of this.particles) {
+            if (p.alpha <= 0) continue;
+
+            if (p.isFeather) {
+              // Elongated feather particle
+              ctx.save();
+              ctx.translate(p.x, p.y);
+              ctx.rotate(p.rotation);
+              ctx.beginPath();
+              ctx.ellipse(0, 0, p.size * 3, p.size * 0.8, 0, 0, Math.PI * 2);
+              ctx.fillStyle = `rgba(${p.color[0]}, ${p.color[1]}, ${p.color[2]}, ${p.alpha * 0.8})`;
+              ctx.fill();
+              // Feather glow
+              ctx.beginPath();
+              ctx.ellipse(0, 0, p.size * 5, p.size * 2, 0, 0, Math.PI * 2);
+              ctx.fillStyle = `rgba(${p.color[0]}, ${p.color[1]}, ${p.color[2]}, ${p.alpha * 0.1})`;
+              ctx.fill();
+              ctx.restore();
+            } else {
+              // Round particle
+              ctx.beginPath();
+              ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+              ctx.fillStyle = `rgba(${p.color[0]}, ${p.color[1]}, ${p.color[2]}, ${p.alpha})`;
+              ctx.fill();
+              // Glow
+              ctx.beginPath();
+              ctx.arc(p.x, p.y, p.size * 3, 0, Math.PI * 2);
+              ctx.fillStyle = `rgba(${p.color[0]}, ${p.color[1]}, ${p.color[2]}, ${p.alpha * 0.15})`;
+              ctx.fill();
+            }
+          }
+
+          // Central flash right at explosion start
+          const flashAge = t - this.explosionTime;
+          if (flashAge < 0.5) {
+            const flashAlpha = (1 - flashAge / 0.5) * 0.6;
+            const flashRadius = 30 + flashAge * 300;
+            const cx = W * 0.52;
+            const cy = H * 0.45;
+            ctx.beginPath();
+            ctx.arc(cx, cy, flashRadius, 0, Math.PI * 2);
+            const fGrad = ctx.createRadialGradient(cx, cy, 0, cx, cy, flashRadius);
+            fGrad.addColorStop(0, `rgba(255, 255, 255, ${flashAlpha})`);
+            fGrad.addColorStop(0.3, `rgba(103, 232, 249, ${flashAlpha * 0.5})`);
+            fGrad.addColorStop(0.6, `rgba(192, 38, 211, ${flashAlpha * 0.2})`);
+            fGrad.addColorStop(1, 'transparent');
+            ctx.fillStyle = fGrad;
+            ctx.fill();
+          }
+        }
+      }
+    }
+
     // ── Initialize ──
     const stars = [];
     for (let i = 0; i < 300; i++) stars.push(new Star(0));  // far
@@ -378,6 +700,9 @@
 
     const nebulae = [];
     for (let i = 0; i < 5; i++) nebulae.push(new Nebula());
+
+    const rooster = new CosmicRooster();
+    rooster.startTime = performance.now() * 0.001;
 
     // Multiple comets — up to 5 at once, streaking from all directions
     const comets = [];
@@ -407,6 +732,10 @@
       }
 
       for (const c of comets) { c.update(); c.draw(); }
+
+      // Cosmic Rooster — materializes then explodes
+      rooster.update(t);
+      rooster.draw(t);
 
       requestAnimationFrame(animate);
     }
