@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>TaleyaLabs LLC</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body {
+      background: #000;
+      overflow: hidden;
+    }
+
+    .fusion-core {
+      animation: fusionPulse 8s infinite ease-in-out;
+    }
+
+    .neon-text {
+      color: #67e8f9;
+      text-shadow:
+        0 0 20px #67e8f9,
+        0 0 40px #67e8f9,
+        0 0 60px #c026d3;
+      animation: neonFlicker 3s infinite alternate;
+    }
+
+    @keyframes fusionPulse {
+      0%, 100% { transform: scale(1) rotate(0deg); }
+      50%       { transform: scale(1.08) rotate(8deg); }
+    }
+
+    @keyframes neonFlicker {
+      0%, 100% { opacity: 1; }
+      50%       { opacity: 0.95; }
+    }
+
+    @keyframes particleFloat {
+      0%   { transform: translateY(0)   translateX(0)   scale(1);   opacity: 0.6; }
+      25%  { transform: translateY(-40px) translateX(20px) scale(1.1); opacity: 0.8; }
+      50%  { transform: translateY(-80px) translateX(-20px) scale(0.9); opacity: 0.5; }
+      75%  { transform: translateY(-120px) translateX(10px) scale(1.05); opacity: 0.7; }
+      100% { transform: translateY(-160px) translateX(0)  scale(1);   opacity: 0; }
+    }
+
+    .particle {
+      position: absolute;
+      border-radius: 50%;
+      background: linear-gradient(to right, #67e8f9, #c026d3);
+      animation: particleFloat 15s linear infinite;
+      opacity: 0.6;
+    }
+  </style>
+</head>
+<body class="min-h-screen flex items-center justify-center relative">
+
+  <!-- Background Fusion Effect -->
+  <div class="absolute inset-0 overflow-hidden">
+    <div class="fusion-core absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] rounded-full bg-gradient-to-br from-cyan-400 via-purple-500 to-pink-500 blur-3xl opacity-30"></div>
+  </div>
+
+  <!-- Floating Particles -->
+  <div id="particles" class="absolute inset-0 pointer-events-none"></div>
+
+  <!-- Main Content -->
+  <div class="relative z-10 text-center px-6">
+    <h1 class="text-7xl md:text-8xl font-bold tracking-tighter neon-text mb-4">
+      TaleyaLabs
+    </h1>
+    <p class="text-2xl md:text-3xl text-cyan-300 mb-12 tracking-widest">
+      Design &bull; Develop &bull; Deploy
+    </p>
+    <div class="text-gray-400 text-sm tracking-widest mb-16">
+      TALEYALABS LLC
+    </div>
+  </div>
+
+  <!-- Hamburger Menu Button -->
+  <div class="absolute top-8 left-8">
+    <button onclick="toggleMenu()" class="text-white text-3xl hover:text-cyan-400 transition-colors" aria-label="Open menu">
+      ☰
+    </button>
+  </div>
+
+  <!-- Menu Overlay -->
+  <div id="menu" class="hidden fixed inset-0 bg-black/95 z-50 flex items-center justify-center">
+    <!-- Close Button -->
+    <button onclick="toggleMenu()" class="absolute top-8 left-8 text-white text-3xl hover:text-cyan-400 transition-colors" aria-label="Close menu">
+      ✕
+    </button>
+    <div class="text-center space-y-8 text-2xl text-white">
+      <a href="https://travenie.com" class="block hover:text-cyan-400 transition-colors">Travenie</a>
+      <a href="#" class="block hover:text-cyan-400 transition-colors">djïrb</a>
+      <a href="#" class="block hover:text-cyan-400 transition-colors">About Us</a>
+      <a href="mailto:tech@taleyalabs.com" class="block hover:text-cyan-400 transition-colors">Contact</a>
+      <div class="pt-8 text-sm text-gray-500">
+        TaleyaLabs LLC<br>
+        Building the future, one system at a time.
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function createParticles() {
+      const container = document.getElementById('particles');
+      for (let i = 0; i < 60; i++) {
+        const particle = document.createElement('div');
+        particle.className = 'particle';
+
+        const size = Math.random() * 6 + 3;
+        particle.style.width  = `${size}px`;
+        particle.style.height = `${size}px`;
+
+        particle.style.left = `${Math.random() * 100}vw`;
+        particle.style.top  = `${Math.random() * 100}vh`;
+
+        particle.style.animationDuration = `${Math.random() * 20 + 15}s`;
+        particle.style.animationDelay    = `-${Math.random() * 15}s`;
+
+        container.appendChild(particle);
+      }
+    }
+
+    function toggleMenu() {
+      const menu = document.getElementById('menu');
+      menu.classList.toggle('hidden');
+    }
+
+    // Close menu on Escape key
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        document.getElementById('menu').classList.add('hidden');
+      }
+    });
+
+    window.onload = () => { createParticles(); };
+  </script>
+</body>
+</html>
