@@ -11,35 +11,42 @@
       overflow: hidden;
     }
 
-    .fusion-core {
-      animation: fusionPulse 8s infinite ease-in-out;
+    /* Full-bleed hero background */
+    .hero-bg {
+      position: fixed;
+      inset: 0;
+      background: url('./download.jpg') center center / cover no-repeat;
+      z-index: 0;
+    }
+
+    /* Subtle darkening overlay so text pops */
+    .hero-overlay {
+      position: fixed;
+      inset: 0;
+      background: radial-gradient(ellipse at center, transparent 30%, rgba(0,0,0,0.5) 100%);
+      z-index: 1;
     }
 
     .neon-text {
-      color: #67e8f9;
+      color: #fff;
       text-shadow:
-        0 0 20px #67e8f9,
-        0 0 40px #67e8f9,
-        0 0 60px #c026d3;
-      animation: neonFlicker 3s infinite alternate;
+        0 0 20px rgba(103, 232, 249, 0.8),
+        0 0 40px rgba(103, 232, 249, 0.5),
+        0 0 80px rgba(192, 38, 211, 0.3);
+      animation: neonPulse 4s infinite alternate;
     }
 
-    @keyframes fusionPulse {
-      0%, 100% { transform: scale(1) rotate(0deg); }
-      50%       { transform: scale(1.08) rotate(8deg); }
-    }
-
-    @keyframes neonFlicker {
-      0%, 100% { opacity: 1; }
-      50%       { opacity: 0.95; }
+    @keyframes neonPulse {
+      0%, 100% { text-shadow: 0 0 20px rgba(103,232,249,0.8), 0 0 40px rgba(103,232,249,0.5), 0 0 80px rgba(192,38,211,0.3); }
+      50%      { text-shadow: 0 0 30px rgba(103,232,249,1),   0 0 60px rgba(103,232,249,0.7), 0 0 100px rgba(192,38,211,0.5); }
     }
 
     @keyframes particleFloat {
-      0%   { transform: translateY(0)   translateX(0)   scale(1);   opacity: 0.6; }
-      25%  { transform: translateY(-40px) translateX(20px) scale(1.1); opacity: 0.8; }
-      50%  { transform: translateY(-80px) translateX(-20px) scale(0.9); opacity: 0.5; }
-      75%  { transform: translateY(-120px) translateX(10px) scale(1.05); opacity: 0.7; }
-      100% { transform: translateY(-160px) translateX(0)  scale(1);   opacity: 0; }
+      0%   { transform: translateY(0)    translateX(0)    scale(1);   opacity: 0.4; }
+      25%  { transform: translateY(-40px) translateX(20px) scale(1.1); opacity: 0.6; }
+      50%  { transform: translateY(-80px) translateX(-20px) scale(0.9); opacity: 0.3; }
+      75%  { transform: translateY(-120px) translateX(10px) scale(1.05); opacity: 0.5; }
+      100% { transform: translateY(-160px) translateX(0)   scale(1);   opacity: 0; }
     }
 
     .particle {
@@ -47,46 +54,58 @@
       border-radius: 50%;
       background: linear-gradient(to right, #67e8f9, #c026d3);
       animation: particleFloat 15s linear infinite;
-      opacity: 0.6;
+      opacity: 0.4;
+    }
+
+    .header-bar {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 40;
+      padding: 1.5rem 2rem;
+      display: flex;
+      align-items: center;
+      gap: 1rem;
     }
   </style>
 </head>
 <body class="min-h-screen flex items-center justify-center relative">
 
-  <!-- Background Fusion Effect -->
-  <div class="absolute inset-0 overflow-hidden">
-    <div class="fusion-core absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] rounded-full bg-gradient-to-br from-cyan-400 via-purple-500 to-pink-500 blur-3xl opacity-30"></div>
-  </div>
+  <!-- Full-bleed Hero Background -->
+  <div class="hero-bg"></div>
+  <div class="hero-overlay"></div>
 
-  <!-- Floating Particles -->
-  <div id="particles" class="absolute inset-0 pointer-events-none"></div>
+  <!-- Floating Particles (subtle overlay on top of image) -->
+  <div id="particles" class="fixed inset-0 pointer-events-none" style="z-index: 2;"></div>
 
-  <!-- Main Content -->
-  <div class="relative z-10 text-center px-6">
-    <h1 class="text-7xl md:text-8xl font-bold tracking-tighter neon-text mb-4">
-      TaleyaLabs
-    </h1>
-    <p class="text-2xl md:text-3xl text-cyan-300 mb-12 tracking-widest">
-      Design &bull; Develop &bull; Deploy
-    </p>
-    <div class="text-gray-400 text-sm tracking-widest mb-16">
-      TALEYALABS LLC
-    </div>
-  </div>
-
-  <!-- Hamburger Menu Button -->
-  <div class="absolute top-8 left-8">
+  <!-- Header: Hamburger + TaleyaLabs LLC -->
+  <div class="header-bar">
     <button onclick="toggleMenu()" class="text-white text-3xl hover:text-cyan-400 transition-colors" aria-label="Open menu">
       ☰
     </button>
+    <span class="text-white text-lg font-medium tracking-wide">TaleyaLabs LLC</span>
+  </div>
+
+  <!-- Main Content -->
+  <div class="relative text-center px-6" style="z-index: 10;">
+    <h1 class="text-7xl md:text-9xl font-bold tracking-tighter neon-text mb-4">
+      TaleyaLabs
+    </h1>
+    <p class="text-2xl md:text-3xl text-cyan-300 mb-6 tracking-widest" style="text-shadow: 0 0 10px rgba(103,232,249,0.5);">
+      Design &bull; Develop &bull; Deploy
+    </p>
   </div>
 
   <!-- Menu Overlay -->
   <div id="menu" class="hidden fixed inset-0 bg-black/95 z-50 flex items-center justify-center">
-    <!-- Close Button -->
-    <button onclick="toggleMenu()" class="absolute top-8 left-8 text-white text-3xl hover:text-cyan-400 transition-colors" aria-label="Close menu">
-      ✕
-    </button>
+    <!-- Close Button + Title (mirrors header position) -->
+    <div class="absolute top-0 left-0 right-0 p-6 flex items-center gap-4">
+      <button onclick="toggleMenu()" class="text-white text-3xl hover:text-cyan-400 transition-colors" aria-label="Close menu">
+        ✕
+      </button>
+      <span class="text-white text-lg font-medium tracking-wide">TaleyaLabs LLC</span>
+    </div>
     <div class="text-center space-y-8 text-2xl text-white">
       <a href="https://travenie.com" class="block hover:text-cyan-400 transition-colors">Travenie</a>
       <a href="#" class="block hover:text-cyan-400 transition-colors">djïrb</a>
@@ -102,11 +121,11 @@
   <script>
     function createParticles() {
       const container = document.getElementById('particles');
-      for (let i = 0; i < 60; i++) {
+      for (let i = 0; i < 40; i++) {
         const particle = document.createElement('div');
         particle.className = 'particle';
 
-        const size = Math.random() * 6 + 3;
+        const size = Math.random() * 4 + 2;
         particle.style.width  = `${size}px`;
         particle.style.height = `${size}px`;
 
@@ -125,7 +144,6 @@
       menu.classList.toggle('hidden');
     }
 
-    // Close menu on Escape key
     document.addEventListener('keydown', (e) => {
       if (e.key === 'Escape') {
         document.getElementById('menu').classList.add('hidden');
