@@ -27,12 +27,18 @@
         0 0 8px rgba(103, 232, 249, 0.5),
         0 0 20px rgba(103, 232, 249, 0.25),
         0 0 40px rgba(192, 38, 211, 0.1);
-      animation: heroGlow 4s ease-in-out infinite alternate;
+      animation: heroTwinkle 3s ease-in-out infinite;
     }
 
-    @keyframes heroGlow {
-      0%   { text-shadow: 0 0 8px rgba(103,232,249,0.5), 0 0 20px rgba(103,232,249,0.25), 0 0 40px rgba(192,38,211,0.1); }
-      100% { text-shadow: 0 0 12px rgba(103,232,249,0.6), 0 0 30px rgba(103,232,249,0.3), 0 0 50px rgba(192,38,211,0.15); }
+    @keyframes heroTwinkle {
+      0%   { text-shadow: 0 0 8px rgba(103,232,249,0.5), 0 0 20px rgba(103,232,249,0.25), 0 0 40px rgba(192,38,211,0.1); opacity: 1; }
+      30%  { text-shadow: 0 0 12px rgba(103,232,249,0.7), 0 0 25px rgba(103,232,249,0.4), 0 0 50px rgba(192,38,211,0.2); opacity: 1; }
+      35%  { text-shadow: 0 0 20px rgba(103,232,249,0.9), 0 0 40px rgba(103,232,249,0.5), 0 0 60px rgba(192,38,211,0.25); opacity: 1; }
+      40%  { text-shadow: 0 0 8px rgba(103,232,249,0.5), 0 0 20px rgba(103,232,249,0.25), 0 0 40px rgba(192,38,211,0.1); opacity: 0.97; }
+      70%  { text-shadow: 0 0 8px rgba(103,232,249,0.5), 0 0 20px rgba(103,232,249,0.25), 0 0 40px rgba(192,38,211,0.1); opacity: 1; }
+      75%  { text-shadow: 0 0 15px rgba(103,232,249,0.8), 0 0 30px rgba(103,232,249,0.45), 0 0 55px rgba(192,38,211,0.2); opacity: 1; }
+      80%  { text-shadow: 0 0 8px rgba(103,232,249,0.5), 0 0 20px rgba(103,232,249,0.25), 0 0 40px rgba(192,38,211,0.1); opacity: 1; }
+      100% { text-shadow: 0 0 8px rgba(103,232,249,0.5), 0 0 20px rgba(103,232,249,0.25), 0 0 40px rgba(192,38,211,0.1); opacity: 1; }
     }
 
     .tagline {
@@ -221,13 +227,13 @@
           this.y = H + margin;
           this.angle = -Math.PI / 3 - Math.random() * Math.PI / 4;  // upward
         }
-        this.speed = 12 + Math.random() * 16;
+        this.speed = 14 + Math.random() * 18;
         this.alpha = 1;
-        this.decay = 0.005 + Math.random() * 0.004;
+        this.decay = 0.004 + Math.random() * 0.003;
         this.active = true;
         this.trail = [];
-        this.maxTrail = 80 + Math.floor(Math.random() * 40);
-        this.headSize = 3 + Math.random() * 2;
+        this.maxTrail = 100 + Math.floor(Math.random() * 50);
+        this.headSize = 4 + Math.random() * 3;
         this.curvature = (Math.random() - 0.5) * 0.002;
         this.currentAngle = this.angle;
       }
@@ -254,8 +260,8 @@
         for (let i = 1; i < this.trail.length; i++) {
           ctx.lineTo(this.trail[i].x, this.trail[i].y);
         }
-        ctx.strokeStyle = `rgba(103, 232, 249, ${this.alpha * 0.06})`;
-        ctx.lineWidth = 30;
+        ctx.strokeStyle = `rgba(103, 232, 249, ${this.alpha * 0.07})`;
+        ctx.lineWidth = 45;
         ctx.lineCap = 'round';
         ctx.stroke();
 
@@ -265,8 +271,8 @@
         for (let i = 1; i < this.trail.length; i++) {
           ctx.lineTo(this.trail[i].x, this.trail[i].y);
         }
-        ctx.strokeStyle = `rgba(103, 232, 249, ${this.alpha * 0.15})`;
-        ctx.lineWidth = 10;
+        ctx.strokeStyle = `rgba(103, 232, 249, ${this.alpha * 0.18})`;
+        ctx.lineWidth = 16;
         ctx.lineCap = 'round';
         ctx.stroke();
 
@@ -285,7 +291,7 @@
           const g = Math.round(232 + (255 - 232) * pct * pct);
           const b = Math.round(249 + (255 - 249) * pct * pct);
           ctx.strokeStyle = `rgba(${r}, ${g}, ${b}, ${t.a * pct})`;
-          ctx.lineWidth = 1 + pct * 3;
+          ctx.lineWidth = 1.5 + pct * 4;
           ctx.lineCap = 'round';
           ctx.stroke();
         }
