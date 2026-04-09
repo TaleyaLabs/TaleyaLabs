@@ -510,8 +510,8 @@
     const nebulae = [];
     for (let i = 0; i < 5; i++) nebulae.push(new Nebula());
 
-    const rooster = new CosmicRooster();
-    rooster.startTime = performance.now() * 0.001;
+    const cosmicComet = new CosmicComet();
+    cosmicComet.startTime = performance.now() * 0.001;
 
     const comets = [];
     for (let i = 0; i < 5; i++) comets.push(new ShootingStar());
@@ -532,8 +532,8 @@
       }
       for (const c of comets) { c.update(); c.draw(); }
 
-      rooster.update(t);
-      rooster.draw(t);
+      cosmicComet.update(t);
+      cosmicComet.draw(t);
 
       requestAnimationFrame(animate);
     }
