@@ -316,148 +316,245 @@
       }
 
       drawComet(cx, cy, size, alpha, t) {
-        // Pulsing fire intensity — faster flicker than before
+        // Pulsing fire intensity — faster flicker
         const pulse = 0.8 + 0.2 * Math.sin(t * 6) + 0.1 * Math.sin(t * 13.7);
         const a = alpha * pulse;
 
-        // Outermost heat haze — deep red, very wide
-        ctx.beginPath(); ctx.arc(cx, cy, size * 7, 0, Math.PI * 2);
+        // ── Jagged boulder silhouette ──────────────────────────
+        // Seed-based pseudo-random for consistent shape per frame,
+        // with slow morphing over time for a living rock feel.
+        const VERTICES = 14;
+        const boulderPath = [];
+        for (let i = 0; i < VERTICES; i++) {
+          const baseAngle = (Math.PI * 2 * i) / VERTICES;
+          // Each vertex has its own persistent jag depth
+          const seed = Math.sin(i * 73.17 + 3.7) * 0.5 + 0.5; // 0..1 per vertex
+          const jag = 0.55 + seed * 0.55; // range 0.55–1.1 = deep craters to jutting ridges
+          // Slow morphing — vertices subtly shift over time
+          const morph = Math.sin(t * 0.4 + i * 2.1) * 0.12;
+          const r = size * (jag + morph);
+          boulderPath.push({
+            x: cx + Math.cos(baseAngle) * r,
+            y: cy + Math.sin(baseAngle) * r,
+          });
+        }
+
+        // Helper: draw the boulder polygon
+        function traceBoulder(scale) {
+          ctx.beginPath();
+          const first = boulderPath[0];
+          ctx.moveTo(cx + (first.x - cx) * scale, cy + (first.y - cy) * scale);
+          for (let i = 1; i <= VERTICES; i++) {
+            const pt = boulderPath[i % VERTICES];
+            ctx.lineTo(cx + (pt.x - cx) * scale, cy + (pt.y - cy) * scale);
+          }
+          ctx.closePath();
+        }
+
+        // Outermost heat haze — deep red
+        ctx.save();
+        traceBoulder(7);
         const hazeGrad = ctx.createRadialGradient(cx, cy, 0, cx, cy, size * 7);
-        hazeGrad.addColorStop(0, `rgba(180,40,0, ${a * 0.06})`);
+        hazeGrad.addColorStop(0, `rgba(180,40,0, ${a * 0.07})`);
         hazeGrad.addColorStop(0.5, `rgba(120,10,0, ${a * 0.03})`);
         hazeGrad.addColorStop(1, 'transparent');
         ctx.fillStyle = hazeGrad; ctx.fill();
+        ctx.restore();
 
         // Outer corona — dark red/orange glow
-        ctx.beginPath(); ctx.arc(cx, cy, size * 5, 0, Math.PI * 2);
+        traceBoulder(5);
         const outerGrad = ctx.createRadialGradient(cx, cy, 0, cx, cy, size * 5);
-        outerGrad.addColorStop(0, `rgba(255,80,0, ${a * 0.12})`);
+        outerGrad.addColorStop(0, `rgba(255,80,0, ${a * 0.14})`);
         outerGrad.addColorStop(0.4, `rgba(200,30,0, ${a * 0.06})`);
         outerGrad.addColorStop(1, 'transparent');
         ctx.fillStyle = outerGrad; ctx.fill();
 
         // Mid glow — orange fire
-        ctx.beginPath(); ctx.arc(cx, cy, size * 3.5, 0, Math.PI * 2);
+        traceBoulder(3.5);
         const midGrad = ctx.createRadialGradient(cx, cy, 0, cx, cy, size * 3.5);
-        midGrad.addColorStop(0, `rgba(255,160,20, ${a * 0.25})`);
+        midGrad.addColorStop(0, `rgba(255,160,20, ${a * 0.28})`);
         midGrad.addColorStop(0.5, `rgba(255,80,0, ${a * 0.12})`);
         midGrad.addColorStop(1, 'transparent');
         ctx.fillStyle = midGrad; ctx.fill();
 
-        // Inner glow — bright yellow/orange
-        ctx.beginPath(); ctx.arc(cx, cy, size * 2, 0, Math.PI * 2);
+        // Inner glow — bright yellow
+        traceBoulder(2);
         const innerGrad = ctx.createRadialGradient(cx, cy, 0, cx, cy, size * 2);
         innerGrad.addColorStop(0, `rgba(255,230,80, ${a * 0.55})`);
         innerGrad.addColorStop(0.6, `rgba(255,160,20, ${a * 0.2})`);
         innerGrad.addColorStop(1, 'transparent');
         ctx.fillStyle = innerGrad; ctx.fill();
 
-        // White-hot core — slightly yellow tinted
-        ctx.beginPath(); ctx.arc(cx, cy, size, 0, Math.PI * 2);
-        ctx.fillStyle = `rgba(255,250,220, ${a * 0.95})`; ctx.fill();
-        // Core bloom
-        ctx.beginPath(); ctx.arc(cx, cy, size * 1.3, 0, Math.PI * 2);
-        ctx.fillStyle = `rgba(255,255,240, ${a * 0.3})`; ctx.fill();
+        // ── Rocky surface — the boulder body ──
+        traceBoulder(1);
+        // Dark rock base
+        const rockGrad = ctx.createRadialGradient(cx - size*0.3, cy - size*0.3, 0, cx, cy, size);
+        rockGrad.addColorStop(0, `rgba(120,80,40, ${a * 0.95})`);
+        rockGrad.addColorStop(0.4, `rgba(80,45,20, ${a * 0.9})`);
+        rockGrad.addColorStop(0.8, `rgba(50,25,10, ${a * 0.85})`);
+        rockGrad.addColorStop(1, `rgba(30,10,5, ${a * 0.8})`);
+        ctx.fillStyle = rockGrad; ctx.fill();
 
-        // ── Flame tendrils — organic, flickering, rising ──
-        const flameCount = 10;
+        // Glowing cracks across the surface
+        for (let i = 0; i < 5; i++) {
+          const crackAngle = (Math.PI * 2 * i) / 5 + Math.sin(t * 0.3 + i) * 0.2;
+          const crackLen = size * (0.4 + Math.sin(i * 4.3) * 0.3);
+          const cx2 = cx + Math.cos(crackAngle) * crackLen;
+          const cy2 = cy + Math.sin(crackAngle) * crackLen;
+          // Hot crack — bright orange/yellow
+          ctx.beginPath();
+          ctx.moveTo(cx + Math.cos(crackAngle) * size * 0.1, cy + Math.sin(crackAngle) * size * 0.1);
+          const midX = (cx + cx2) / 2 + Math.sin(t * 2 + i * 3) * size * 0.15;
+          const midY = (cy + cy2) / 2 + Math.cos(t * 2 + i * 3) * size * 0.15;
+          ctx.quadraticCurveTo(midX, midY, cx2, cy2);
+          const crackBright = 0.5 + 0.5 * Math.sin(t * 4 + i * 7);
+          ctx.strokeStyle = `rgba(255,${Math.round(140 + 80*crackBright)},20, ${a * (0.3 + 0.4*crackBright)})`;
+          ctx.lineWidth = 1 + crackBright; ctx.lineCap = 'round'; ctx.stroke();
+          // Glow around crack
+          ctx.strokeStyle = `rgba(255,80,0, ${a * 0.1})`;
+          ctx.lineWidth = 4; ctx.stroke();
+        }
+
+        // Hot edge glow — molten rim
+        traceBoulder(1.15);
+        ctx.strokeStyle = `rgba(255,100,0, ${a * 0.2})`;
+        ctx.lineWidth = size * 0.4; ctx.stroke();
+        traceBoulder(1.05);
+        ctx.strokeStyle = `rgba(255,180,40, ${a * 0.15})`;
+        ctx.lineWidth = size * 0.2; ctx.stroke();
+
+        // ── Flame tendrils erupting from edges ──
+        const flameCount = 8;
         for (let i = 0; i < flameCount; i++) {
-          // Each flame has its own random-ish angle, biased upward
-          const baseAngle = -Math.PI/2 + (i / flameCount) * Math.PI * 2;
-          // Upward bias: flames near top are longer
-          const upBias = Math.max(0, -Math.sin(baseAngle)) * 0.6 + 0.4;
+          const vi = Math.floor((i / flameCount) * VERTICES);
+          const vertex = boulderPath[vi];
+          const baseAngle = Math.atan2(vertex.y - cy, vertex.x - cx);
           const wobble = Math.sin(t * (4 + i * 0.7) + i * 2.3) * 0.3;
           const angle = baseAngle + wobble;
+          const upBias = Math.max(0, -Math.sin(baseAngle)) * 0.6 + 0.4;
 
-          const flameLen = size * (2.5 + upBias * 3 + Math.sin(t * (5 + i) + i * 1.7) * 1.5);
+          const flameLen = size * (1.8 + upBias * 2.5 + Math.sin(t * (5 + i) + i * 1.7) * 1.2);
           const midLen = flameLen * 0.5;
+          const startX = vertex.x;
+          const startY = vertex.y;
+          const mx = startX + Math.cos(angle + Math.sin(t * 3 + i) * 0.4) * midLen;
+          const my = startY + Math.sin(angle + Math.sin(t * 3 + i) * 0.4) * midLen;
+          const ex = startX + Math.cos(angle) * flameLen;
+          const ey = startY + Math.sin(angle) * flameLen;
 
-          // Curved flame using quadratic bezier
-          const mx = cx + Math.cos(angle + Math.sin(t * 3 + i) * 0.4) * midLen;
-          const my = cy + Math.sin(angle + Math.sin(t * 3 + i) * 0.4) * midLen;
-          const ex = cx + Math.cos(angle) * flameLen;
-          const ey = cy + Math.sin(angle) * flameLen;
-
-          // Wide soft glow layer
-          ctx.beginPath();
-          ctx.moveTo(cx, cy);
+          // Glow
+          ctx.beginPath(); ctx.moveTo(startX, startY);
           ctx.quadraticCurveTo(mx, my, ex, ey);
-          ctx.strokeStyle = `rgba(255,60,0, ${a * 0.04})`;
-          ctx.lineWidth = size * 1.5 * upBias; ctx.lineCap = 'round'; ctx.stroke();
+          ctx.strokeStyle = `rgba(255,60,0, ${a * 0.05})`;
+          ctx.lineWidth = size * 1.2 * upBias; ctx.lineCap = 'round'; ctx.stroke();
 
-          // Main flame body
-          ctx.beginPath();
-          ctx.moveTo(cx, cy);
+          // Flame body
+          ctx.beginPath(); ctx.moveTo(startX, startY);
           ctx.quadraticCurveTo(mx, my, ex, ey);
-          const flameProgress = i / flameCount;
-          const r = 255;
-          const g = Math.round(120 + 100 * (1 - flameProgress * 0.5) * Math.sin(t * 4 + i));
-          const b = Math.round(20 * Math.max(0, Math.sin(t * 6 + i * 3)));
-          ctx.strokeStyle = `rgba(${r},${Math.max(40,g)},${b}, ${a * 0.15 * upBias})`;
-          ctx.lineWidth = 3 + size * 0.3; ctx.lineCap = 'round'; ctx.stroke();
+          const g = Math.round(120 + 100 * Math.sin(t * 4 + i));
+          ctx.strokeStyle = `rgba(255,${Math.max(40,g)},10, ${a * 0.18 * upBias})`;
+          ctx.lineWidth = 2 + size * 0.25; ctx.lineCap = 'round'; ctx.stroke();
 
-          // Bright inner flame core
-          ctx.beginPath();
-          ctx.moveTo(cx, cy);
+          // Bright core
+          ctx.beginPath(); ctx.moveTo(startX, startY);
           ctx.quadraticCurveTo(mx, my, ex, ey);
-          ctx.strokeStyle = `rgba(255,220,60, ${a * 0.08 * upBias})`;
+          ctx.strokeStyle = `rgba(255,220,60, ${a * 0.1 * upBias})`;
           ctx.lineWidth = 1.5; ctx.lineCap = 'round'; ctx.stroke();
         }
 
         // ── Rising ember particles ──
-        for (let i = 0; i < 12; i++) {
-          const emberT = (t * 1.5 + i * 0.8) % 3; // cycle every 3s
+        for (let i = 0; i < 10; i++) {
+          const emberT = (t * 1.5 + i * 0.8) % 3;
           const emberLife = emberT / 3;
           if (emberLife > 1) continue;
-          const emberAngle = -Math.PI/2 + (Math.sin(i * 7.3) * 0.8); // mostly upward
+          const emberAngle = -Math.PI/2 + (Math.sin(i * 7.3) * 0.9);
           const emberDist = size * (1.5 + emberLife * 5);
           const drift = Math.sin(t * 2 + i * 4) * size * 0.8;
-          const ex = cx + Math.cos(emberAngle) * emberDist + drift;
-          const ey = cy + Math.sin(emberAngle) * emberDist;
+          const exx = cx + Math.cos(emberAngle) * emberDist + drift;
+          const eyy = cy + Math.sin(emberAngle) * emberDist;
           const emberSize = (1 - emberLife) * (1.5 + Math.sin(i * 3.7) * 0.8);
           const emberAlpha = a * (1 - emberLife) * 0.7;
-
-          ctx.beginPath(); ctx.arc(ex, ey, emberSize, 0, Math.PI * 2);
-          const emberHue = 20 + Math.sin(i * 5) * 20; // orange-red range
-          ctx.fillStyle = `hsla(${emberHue}, 100%, ${55 + emberLife * 20}%, ${emberAlpha})`;
+          ctx.beginPath(); ctx.arc(exx, eyy, emberSize, 0, Math.PI * 2);
+          ctx.fillStyle = `hsla(${20 + Math.sin(i*5)*20}, 100%, ${55 + emberLife*20}%, ${emberAlpha})`;
           ctx.fill();
-        }
-
-        // ── Orbiting fire sparks — orange/yellow ──
-        for (let i = 0; i < 8; i++) {
-          const orbitAngle = t * 2.5 + (Math.PI * 2 * i / 8);
-          const orbitR = size * 2.5 + Math.sin(t * 3 + i) * size * 0.5;
-          const sx = cx + Math.cos(orbitAngle) * orbitR;
-          const sy = cy + Math.sin(orbitAngle) * orbitR;
-          const sparkSize = 1 + Math.sin(t * 5 + i * 2) * 0.5;
-          ctx.beginPath(); ctx.arc(sx, sy, sparkSize, 0, Math.PI * 2);
-          const sparkHue = i % 3 === 0 ? '45' : i % 3 === 1 ? '25' : '10'; // yellow, orange, red
-          ctx.fillStyle = `hsla(${sparkHue}, 100%, 65%, ${a * 0.6})`; ctx.fill();
         }
       }
 
       explode(cx, cy) {
         this.explosionComets = [];
-        const colors = [[103,232,249],[192,38,211],[255,100,200],[80,255,180],[255,200,50],[120,180,255],[255,60,80],[200,130,255]];
-        for (let i = 0; i < 35; i++) {
-          const angle = (Math.PI * 2 * i / 35) + (Math.random() - 0.5) * 0.3;
-          const speed = 8 + Math.random() * 14;
+        // Dramatic fire palette — molten golds, deep reds, white-hot shards
+        const colors = [
+          [255,220,60],[255,160,20],[255,80,0],[200,30,0],
+          [255,255,200],[255,120,40],[180,20,0],[255,200,80],
+          [120,40,0],[255,100,60],
+        ];
+
+        // Fewer but wilder — 12 chunks instead of 35 uniform comets
+        const chunkCount = 12;
+        for (let i = 0; i < chunkCount; i++) {
+          // Truly random angles — no even distribution
+          const angle = Math.random() * Math.PI * 2;
+          // Massive speed variance: some crawl, some scream
+          const speed = 3 + Math.random() * Math.random() * 25; // squared random = more extremes
           const color = colors[Math.floor(Math.random() * colors.length)];
+
+          // Each chunk has a unique shape type
+          const shapeType = Math.random();
+          let shape, headSize;
+          if (shapeType < 0.3) {
+            shape = 'shard';    // long jagged shard
+            headSize = 1.5 + Math.random() * 2;
+          } else if (shapeType < 0.6) {
+            shape = 'boulder';  // big chunky rock
+            headSize = 5 + Math.random() * 8;
+          } else if (shapeType < 0.85) {
+            shape = 'ember';    // tiny hot speck
+            headSize = 0.8 + Math.random() * 1.5;
+          } else {
+            shape = 'molten';   // medium irregular blob
+            headSize = 3 + Math.random() * 4;
+          }
+
+          // Spin for shards and boulders
+          const spin = (Math.random() - 0.5) * 8;
+
+          // Varied drag — boulders are heavy, embers float
+          const drag = shape === 'boulder' ? 0.975 + Math.random() * 0.01
+                     : shape === 'ember'   ? 0.992 + Math.random() * 0.005
+                     : 0.983 + Math.random() * 0.01;
+
+          // Varied decay — big things last longer
+          const decay = shape === 'boulder' ? 0.003 + Math.random() * 0.003
+                      : shape === 'ember'   ? 0.008 + Math.random() * 0.01
+                      : 0.004 + Math.random() * 0.005;
+
+          // Boulder vertices (jagged polygon for boulder/shard shapes)
+          const vertices = [];
+          if (shape === 'boulder' || shape === 'shard') {
+            const vCount = shape === 'shard' ? 5 : 7;
+            for (let v = 0; v < vCount; v++) {
+              const va = (Math.PI * 2 * v) / vCount;
+              const elongate = shape === 'shard' ? (v === 0 || v === vCount-1 ? 2.5 : 0.4) : 1;
+              const jag = (0.5 + Math.random() * 0.7) * elongate;
+              vertices.push({ angle: va, r: jag });
+            }
+          }
+
           this.explosionComets.push({
             x: cx, y: cy,
             vx: Math.cos(angle) * speed,
             vy: Math.sin(angle) * speed,
             trail: [],
-            maxTrail: 50 + Math.floor(Math.random() * 30),
-            headSize: 2.5 + Math.random() * 3,
-            alpha: 1,
-            decay: 0.005 + Math.random() * 0.005,
-            color: color,
-            drag: 0.987,
+            maxTrail: shape === 'boulder' ? 30 : shape === 'shard' ? 60 : 20,
+            headSize, alpha: 1, decay, color, drag, shape, spin,
+            rotation: Math.random() * Math.PI * 2,
+            vertices,
+            // Gravity — slight downward pull for realism
+            gravity: shape === 'boulder' ? 0.08 : shape === 'ember' ? 0.01 : 0.04,
           });
         }
         document.body.classList.add('shaking');
-        setTimeout(() => document.body.classList.remove('shaking'), 600);
+        setTimeout(() => document.body.classList.remove('shaking'), 800);
       }
 
       update(t) {
@@ -479,7 +576,9 @@
           for (const c of this.explosionComets) {
             if (c.alpha <= 0) continue;
             c.vx *= c.drag; c.vy *= c.drag;
+            c.vy += (c.gravity || 0.04); // gravity pull
             c.x += c.vx; c.y += c.vy;
+            c.rotation += (c.spin || 0) * 0.016; // spin per frame
             c.alpha -= c.decay;
             c.trail.push({ x: c.x, y: c.y, a: c.alpha });
             if (c.trail.length > c.maxTrail) c.trail.shift();
@@ -513,47 +612,100 @@
 
         if (this.phase === 'exploding') {
           for (const c of this.explosionComets) {
-            if (c.alpha <= 0 || c.trail.length < 2) continue;
+            if (c.alpha <= 0) continue;
 
-            ctx.beginPath();
-            ctx.moveTo(c.trail[0].x, c.trail[0].y);
-            for (let i = 1; i < c.trail.length; i++) ctx.lineTo(c.trail[i].x, c.trail[i].y);
-            ctx.strokeStyle = `rgba(${c.color[0]},${c.color[1]},${c.color[2]}, ${c.alpha * 0.06})`;
-            ctx.lineWidth = 25; ctx.lineCap = 'round'; ctx.stroke();
+            // ── Trail — fire-colored, width varies by shape ──
+            if (c.trail.length >= 2) {
+              const trailWidth = c.shape === 'boulder' ? 6 : c.shape === 'shard' ? 3 : c.shape === 'ember' ? 1.5 : 4;
 
-            ctx.beginPath();
-            ctx.moveTo(c.trail[0].x, c.trail[0].y);
-            for (let i = 1; i < c.trail.length; i++) ctx.lineTo(c.trail[i].x, c.trail[i].y);
-            ctx.strokeStyle = `rgba(${c.color[0]},${c.color[1]},${c.color[2]}, ${c.alpha * 0.18})`;
-            ctx.lineWidth = 10; ctx.lineCap = 'round'; ctx.stroke();
+              // Outer glow trail
+              ctx.beginPath();
+              ctx.moveTo(c.trail[0].x, c.trail[0].y);
+              for (let i = 1; i < c.trail.length; i++) ctx.lineTo(c.trail[i].x, c.trail[i].y);
+              ctx.strokeStyle = `rgba(${c.color[0]},${c.color[1]},${c.color[2]}, ${c.alpha * 0.06})`;
+              ctx.lineWidth = trailWidth * 4; ctx.lineCap = 'round'; ctx.stroke();
 
-            for (let i = 1; i < c.trail.length; i++) {
-              const pt = c.trail[i], prev = c.trail[i-1], pct = i / c.trail.length;
-              ctx.beginPath(); ctx.moveTo(prev.x, prev.y); ctx.lineTo(pt.x, pt.y);
-              const r = Math.round(c.color[0] + (255-c.color[0])*pct*pct);
-              const g = Math.round(c.color[1] + (255-c.color[1])*pct*pct);
-              const b = Math.round(c.color[2] + (255-c.color[2])*pct*pct);
-              ctx.strokeStyle = `rgba(${r},${g},${b}, ${pt.a * pct})`;
-              ctx.lineWidth = 1 + pct * 3.5; ctx.lineCap = 'round'; ctx.stroke();
+              // Inner trail with gradient
+              for (let i = 1; i < c.trail.length; i++) {
+                const pt = c.trail[i], prev = c.trail[i-1], pct = i / c.trail.length;
+                ctx.beginPath(); ctx.moveTo(prev.x, prev.y); ctx.lineTo(pt.x, pt.y);
+                const r = Math.round(c.color[0] + (255-c.color[0])*pct*pct);
+                const g = Math.round(c.color[1] + (255-c.color[1])*pct*pct);
+                const b = Math.round(c.color[2] + (255-c.color[2])*pct*pct);
+                ctx.strokeStyle = `rgba(${r},${g},${b}, ${pt.a * pct * 0.8})`;
+                ctx.lineWidth = trailWidth * pct; ctx.lineCap = 'round'; ctx.stroke();
+              }
             }
 
-            ctx.beginPath(); ctx.arc(c.x, c.y, c.headSize * 4, 0, Math.PI*2);
-            ctx.fillStyle = `rgba(${c.color[0]},${c.color[1]},${c.color[2]}, ${c.alpha * 0.1})`; ctx.fill();
-            ctx.beginPath(); ctx.arc(c.x, c.y, c.headSize * 2, 0, Math.PI*2);
-            ctx.fillStyle = `rgba(${c.color[0]},${c.color[1]},${c.color[2]}, ${c.alpha * 0.3})`; ctx.fill();
-            ctx.beginPath(); ctx.arc(c.x, c.y, c.headSize, 0, Math.PI*2);
-            ctx.fillStyle = `rgba(255,255,255, ${c.alpha * 0.9})`; ctx.fill();
+            // ── Head shape — different per chunk type ──
+            ctx.save();
+            ctx.translate(c.x, c.y);
+            ctx.rotate(c.rotation || 0);
+
+            if (c.shape === 'boulder' && c.vertices) {
+              // Jagged rock polygon with molten glow
+              ctx.beginPath();
+              for (let v = 0; v < c.vertices.length; v++) {
+                const vt = c.vertices[v];
+                const px = Math.cos(vt.angle) * vt.r * c.headSize;
+                const py = Math.sin(vt.angle) * vt.r * c.headSize;
+                v === 0 ? ctx.moveTo(px, py) : ctx.lineTo(px, py);
+              }
+              ctx.closePath();
+              // Dark rock fill
+              ctx.fillStyle = `rgba(60,30,10, ${c.alpha * 0.9})`; ctx.fill();
+              // Molten edge glow
+              ctx.strokeStyle = `rgba(${c.color[0]},${c.color[1]},${c.color[2]}, ${c.alpha * 0.5})`;
+              ctx.lineWidth = 2; ctx.stroke();
+              // Hot core glow
+              ctx.beginPath(); ctx.arc(0, 0, c.headSize * 0.4, 0, Math.PI*2);
+              ctx.fillStyle = `rgba(255,200,60, ${c.alpha * 0.3})`; ctx.fill();
+
+            } else if (c.shape === 'shard' && c.vertices) {
+              // Elongated sharp shard
+              ctx.beginPath();
+              for (let v = 0; v < c.vertices.length; v++) {
+                const vt = c.vertices[v];
+                const px = Math.cos(vt.angle) * vt.r * c.headSize;
+                const py = Math.sin(vt.angle) * vt.r * c.headSize;
+                v === 0 ? ctx.moveTo(px, py) : ctx.lineTo(px, py);
+              }
+              ctx.closePath();
+              ctx.fillStyle = `rgba(${c.color[0]},${c.color[1]},${c.color[2]}, ${c.alpha * 0.7})`; ctx.fill();
+              ctx.strokeStyle = `rgba(255,255,200, ${c.alpha * 0.4})`;
+              ctx.lineWidth = 1; ctx.stroke();
+
+            } else if (c.shape === 'ember') {
+              // Tiny bright speck with bloom
+              ctx.beginPath(); ctx.arc(0, 0, c.headSize * 3, 0, Math.PI*2);
+              ctx.fillStyle = `rgba(${c.color[0]},${c.color[1]},${c.color[2]}, ${c.alpha * 0.1})`; ctx.fill();
+              ctx.beginPath(); ctx.arc(0, 0, c.headSize, 0, Math.PI*2);
+              ctx.fillStyle = `rgba(255,255,220, ${c.alpha * 0.9})`; ctx.fill();
+
+            } else {
+              // Molten — irregular blob
+              ctx.beginPath(); ctx.arc(0, 0, c.headSize * 2.5, 0, Math.PI*2);
+              ctx.fillStyle = `rgba(${c.color[0]},${c.color[1]},${c.color[2]}, ${c.alpha * 0.12})`; ctx.fill();
+              ctx.beginPath(); ctx.arc(0, 0, c.headSize * 1.2, 0, Math.PI*2);
+              ctx.fillStyle = `rgba(${c.color[0]},${c.color[1]},${c.color[2]}, ${c.alpha * 0.4})`; ctx.fill();
+              ctx.beginPath(); ctx.arc(0, 0, c.headSize * 0.6, 0, Math.PI*2);
+              ctx.fillStyle = `rgba(255,255,230, ${c.alpha * 0.7})`; ctx.fill();
+            }
+
+            ctx.restore();
           }
 
+          // ── Impact flash — fire-toned, dramatic ──
           const flashAge = t - this.explosionTime;
-          if (flashAge < 0.7) {
-            const flashAlpha = (1 - flashAge / 0.7) * 0.8;
-            const flashRadius = 50 + flashAge * 500;
+          if (flashAge < 0.9) {
+            const flashAlpha = (1 - flashAge / 0.9) * 0.9;
+            const flashRadius = 60 + flashAge * 600;
             ctx.beginPath(); ctx.arc(W/2, H/2, flashRadius, 0, Math.PI*2);
             const fGrad = ctx.createRadialGradient(W/2, H/2, 0, W/2, H/2, flashRadius);
-            fGrad.addColorStop(0, `rgba(255,255,230, ${flashAlpha})`);
-            fGrad.addColorStop(0.2, `rgba(255,160,20, ${flashAlpha*0.6})`);
-            fGrad.addColorStop(0.5, `rgba(200,40,0, ${flashAlpha*0.25})`);
+            fGrad.addColorStop(0, `rgba(255,255,220, ${flashAlpha})`);
+            fGrad.addColorStop(0.15, `rgba(255,200,40, ${flashAlpha*0.7})`);
+            fGrad.addColorStop(0.35, `rgba(255,80,0, ${flashAlpha*0.3})`);
+            fGrad.addColorStop(0.6, `rgba(180,20,0, ${flashAlpha*0.12})`);
             fGrad.addColorStop(1, 'transparent');
             ctx.fillStyle = fGrad; ctx.fill();
           }
