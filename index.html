@@ -20,30 +20,46 @@
       z-index: 0;
     }
 
-    /* ── Hero Text ── */
+    /* ── Hero Text — Dramatic Gradient + Multi-layer Glow ── */
     .hero-title {
-      color: #67e8f9;
-      text-shadow:
-        0 0 8px rgba(103, 232, 249, 0.5),
-        0 0 20px rgba(103, 232, 249, 0.25),
-        0 0 40px rgba(192, 38, 211, 0.1);
-      animation: heroTwinkle 3s ease-in-out infinite;
+      background: linear-gradient(135deg, #67e8f9 0%, #a855f7 50%, #67e8f9 100%);
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+      filter: drop-shadow(0 0 20px rgba(103, 232, 249, 0.4)) drop-shadow(0 0 40px rgba(168, 85, 247, 0.3));
+      animation: heroLoadIn 0.8s cubic-bezier(0.34, 1.56, 0.64, 1) forwards, heroTwinkle 3s ease-in-out 0.8s infinite;
+      opacity: 0;
+      transform: scale(0.95);
+    }
+
+    @keyframes heroLoadIn {
+      0% { opacity: 0; transform: scale(0.95); }
+      100% { opacity: 1; transform: scale(1); }
     }
 
     @keyframes heroTwinkle {
-      0%   { text-shadow: 0 0 8px rgba(103,232,249,0.5), 0 0 20px rgba(103,232,249,0.25), 0 0 40px rgba(192,38,211,0.1); opacity: 1; }
-      30%  { text-shadow: 0 0 12px rgba(103,232,249,0.7), 0 0 25px rgba(103,232,249,0.4), 0 0 50px rgba(192,38,211,0.2); opacity: 1; }
-      35%  { text-shadow: 0 0 20px rgba(103,232,249,0.9), 0 0 40px rgba(103,232,249,0.5), 0 0 60px rgba(192,38,211,0.25); opacity: 1; }
-      40%  { text-shadow: 0 0 8px rgba(103,232,249,0.5), 0 0 20px rgba(103,232,249,0.25), 0 0 40px rgba(192,38,211,0.1); opacity: 0.97; }
-      70%  { text-shadow: 0 0 8px rgba(103,232,249,0.5), 0 0 20px rgba(103,232,249,0.25), 0 0 40px rgba(192,38,211,0.1); opacity: 1; }
-      75%  { text-shadow: 0 0 15px rgba(103,232,249,0.8), 0 0 30px rgba(103,232,249,0.45), 0 0 55px rgba(192,38,211,0.2); opacity: 1; }
-      80%  { text-shadow: 0 0 8px rgba(103,232,249,0.5), 0 0 20px rgba(103,232,249,0.25), 0 0 40px rgba(192,38,211,0.1); opacity: 1; }
-      100% { text-shadow: 0 0 8px rgba(103,232,249,0.5), 0 0 20px rgba(103,232,249,0.25), 0 0 40px rgba(192,38,211,0.1); opacity: 1; }
+      0%   { filter: drop-shadow(0 0 20px rgba(103,232,249,0.4)) drop-shadow(0 0 40px rgba(168,85,247,0.3)); }
+      30%  { filter: drop-shadow(0 0 30px rgba(103,232,249,0.6)) drop-shadow(0 0 60px rgba(168,85,247,0.4)); }
+      35%  { filter: drop-shadow(0 0 40px rgba(103,232,249,0.8)) drop-shadow(0 0 80px rgba(168,85,247,0.5)); }
+      40%  { filter: drop-shadow(0 0 20px rgba(103,232,249,0.4)) drop-shadow(0 0 40px rgba(168,85,247,0.3)); }
+      70%  { filter: drop-shadow(0 0 20px rgba(103,232,249,0.4)) drop-shadow(0 0 40px rgba(168,85,247,0.3)); }
+      75%  { filter: drop-shadow(0 0 35px rgba(103,232,249,0.7)) drop-shadow(0 0 70px rgba(168,85,247,0.45)); }
+      80%  { filter: drop-shadow(0 0 20px rgba(103,232,249,0.4)) drop-shadow(0 0 40px rgba(168,85,247,0.3)); }
+      100% { filter: drop-shadow(0 0 20px rgba(103,232,249,0.4)) drop-shadow(0 0 40px rgba(168,85,247,0.3)); }
     }
 
     .tagline {
       color: #a5f3fc;
-      text-shadow: 0 0 15px rgba(103, 232, 249, 0.4);
+      filter: drop-shadow(0 0 20px rgba(103, 232, 249, 0.3));
+      letter-spacing: 0.15em;
+      animation: taglineSlideUp 1s cubic-bezier(0.34, 1.56, 0.64, 1) 0.2s forwards;
+      opacity: 0;
+      transform: translateY(8px);
+    }
+
+    @keyframes taglineSlideUp {
+      0% { opacity: 0; transform: translateY(8px); }
+      100% { opacity: 1; transform: translateY(0); }
     }
 
     /* ── Header ── */
@@ -54,8 +70,35 @@
       padding: 1.5rem 2rem;
       display: flex;
       align-items: center;
-      gap: 1rem;
-      background: linear-gradient(to bottom, rgba(0,0,0,0.6), transparent);
+      gap: 0.75rem;
+      background: linear-gradient(to bottom, rgba(0,0,0,0.5), transparent);
+      border-bottom: 1px solid rgba(103, 232, 249, 0.1);
+      transition: border-color 0.3s ease;
+    }
+
+    .header-bar .header-mark {
+      font-size: 1.25rem;
+      color: #67e8f9;
+      opacity: 0.7;
+      font-weight: 300;
+      letter-spacing: 0.2em;
+    }
+
+    .header-bar span {
+      font-size: 0.95rem;
+      font-weight: 500;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: #e0e7ff;
+    }
+
+    .header-bar button {
+      transition: all 0.3s ease;
+    }
+
+    .header-bar button:hover {
+      color: #67e8f9;
+      text-shadow: 0 0 10px rgba(103, 232, 249, 0.5);
     }
 
     /* ── Mouse-reactive glow ── */
@@ -88,6 +131,161 @@
       90% { transform: translate(-1px, 1px); }
       100%{ transform: translate(0, 0); }
     }
+
+    /* ── Menu overlay — staggered animations ── */
+    .menu-item {
+      opacity: 0;
+      animation: menuSlideUp 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+    }
+
+    .menu-item:nth-child(1) { animation-delay: 0.1s; }
+    .menu-item:nth-child(2) { animation-delay: 0.2s; }
+    .menu-item:nth-child(3) { animation-delay: 0.3s; }
+    .menu-item:nth-child(4) { animation-delay: 0.4s; }
+    .menu-item:nth-child(5) { animation-delay: 0.5s; }
+
+    @keyframes menuSlideUp {
+      0% { opacity: 0; transform: translateY(12px); }
+      100% { opacity: 1; transform: translateY(0); }
+    }
+
+    .menu-link {
+      position: relative;
+      font-weight: 400;
+      letter-spacing: 0.06em;
+      transition: all 0.3s ease;
+      color: #f1f5f9;
+      border-left: 2px solid transparent;
+      padding-left: 0.75rem;
+    }
+
+    .menu-link:hover {
+      color: #67e8f9;
+      text-shadow: 0 0 12px rgba(103, 232, 249, 0.4);
+      border-left-color: #67e8f9;
+      padding-left: 1rem;
+    }
+
+    .menu-link.coming-soon {
+      color: #94a3b8;
+      cursor: default;
+    }
+
+    .menu-link.coming-soon:hover {
+      color: #94a3b8;
+      text-shadow: none;
+      border-left-color: transparent;
+      padding-left: 0.75rem;
+    }
+
+    .coming-soon-badge {
+      display: inline-block;
+      margin-left: 0.5rem;
+      padding: 0.25rem 0.75rem;
+      background: rgba(103, 232, 249, 0.15);
+      border: 1px solid rgba(103, 232, 249, 0.4);
+      border-radius: 9999px;
+      font-size: 0.7rem;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      color: #67e8f9;
+      text-transform: uppercase;
+      transition: all 0.3s ease;
+    }
+
+    .menu-link.coming-soon:hover .coming-soon-badge {
+      background: rgba(103, 232, 249, 0.25);
+      border-color: rgba(103, 232, 249, 0.6);
+    }
+
+    /* ── Panel — About & Privacy ── */
+    .menu-panel {
+      opacity: 0;
+      max-height: 0;
+      overflow: hidden;
+      transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    .menu-panel.open {
+      opacity: 1;
+      max-height: 600px;
+    }
+
+    .panel-content {
+      margin-top: 1.5rem;
+      padding: 1.5rem;
+      background: rgba(30, 30, 40, 0.6);
+      border: 1px solid rgba(103, 232, 249, 0.15);
+      border-radius: 0.5rem;
+      backdrop-filter: blur(8px);
+    }
+
+    .panel-title {
+      color: #67e8f9;
+      font-weight: 600;
+      letter-spacing: 0.06em;
+      margin-bottom: 1rem;
+      font-size: 0.95rem;
+      text-transform: uppercase;
+    }
+
+    .panel-section {
+      margin-bottom: 1.5rem;
+    }
+
+    .panel-section-title {
+      color: #e0e7ff;
+      font-weight: 600;
+      margin-bottom: 0.5rem;
+      font-size: 0.9rem;
+    }
+
+    .panel-text {
+      color: #cbd5e1;
+      font-size: 0.85rem;
+      line-height: 1.6;
+    }
+
+    .panel-footer {
+      color: #64748b;
+      font-size: 0.75rem;
+      margin-top: 1.5rem;
+      padding-top: 1rem;
+      border-top: 1px solid rgba(103, 232, 249, 0.1);
+    }
+
+    /* ── Menu footer ── */
+    .menu-footer {
+      margin-top: 2rem;
+      padding-top: 1.5rem;
+      border-top: 1px solid rgba(103, 232, 249, 0.2);
+      color: #64748b;
+      font-size: 0.85rem;
+      letter-spacing: 0.05em;
+      line-height: 1.6;
+      text-transform: uppercase;
+    }
+
+    .menu-footer .brand {
+      color: #a5f3fc;
+      font-weight: 500;
+    }
+
+    /* ── Mobile adjustments ── */
+    @media (max-width: 768px) {
+      .hero-title {
+        font-size: 4rem;
+      }
+
+      .tagline {
+        font-size: 1.25rem;
+      }
+
+      .cursor-glow {
+        opacity: 0;
+        pointer-events: none;
+      }
+    }
   </style>
 </head>
 <body class="min-h-screen flex items-center justify-center relative">
@@ -103,7 +301,8 @@
     <button onclick="toggleMenu()" class="text-white text-3xl hover:text-cyan-400 transition-colors" aria-label="Open menu">
       ☰
     </button>
-    <span class="text-white text-lg font-medium tracking-wide">TaleyaLabs LLC</span>
+    <span class="header-mark">✦</span>
+    <span class="text-white">TaleyaLabs LLC</span>
   </div>
 
   <!-- Main Content -->
@@ -117,64 +316,104 @@
   </div>
 
   <!-- Menu Overlay -->
-  <div id="menu" class="hidden fixed inset-0 bg-black/95 z-50 flex items-center justify-center">
-    <div class="absolute top-0 left-0 right-0 p-6 flex items-center gap-4">
+  <div id="menu" class="hidden fixed inset-0 bg-black/95 z-50 overflow-y-auto">
+    <div class="absolute top-0 left-0 right-0 p-6 flex items-center gap-4 border-b border-cyan-900/20">
       <button onclick="toggleMenu()" class="text-white text-3xl hover:text-cyan-400 transition-colors" aria-label="Close menu">
         ✕
       </button>
-      <span class="text-white text-lg font-medium tracking-wide">TaleyaLabs LLC</span>
+      <span class="header-mark">✦</span>
+      <span class="text-white font-medium tracking-widest text-sm">TaleyaLabs LLC</span>
     </div>
-    <div class="text-center space-y-8 text-2xl text-white">
-      <a href="https://travenie.com" class="block hover:text-cyan-400 transition-colors">Travenie</a>
-      <a href="#" class="block text-gray-400 relative group cursor-default">djïrb <span class="absolute -bottom-6 left-1/2 -translate-x-1/2 text-xs text-cyan-400 opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">Coming Soon</span></a>
-      <a href="#" class="block hover:text-cyan-400 transition-colors" onclick="event.preventDefault(); document.getElementById('aboutPanel').classList.toggle('hidden');">About Us</a>
-      <div id="aboutPanel" class="hidden mt-2 text-base text-gray-400 max-w-md mx-auto leading-relaxed">
-        Where soul meets system. We build intelligent experiences<br>at the intersection of human intuition and emerging technology.
-      </div>
-      <a href="mailto:support@taleyalabs.com" class="block hover:text-cyan-400 transition-colors">Contact</a>
-      <a href="#" class="block hover:text-cyan-400 transition-colors" onclick="event.preventDefault(); document.getElementById('privacyPanel').classList.toggle('hidden');">Privacy &amp; Compliance</a>
-      <div id="privacyPanel" class="hidden mt-2 text-left text-sm text-gray-400 max-w-lg mx-auto leading-relaxed space-y-4 px-2">
 
-        <p class="text-cyan-400 font-semibold text-base">TaleyaLabs LLC — Privacy &amp; Compliance</p>
+    <div class="flex flex-col items-center pt-32 pb-20">
+      <div class="space-y-8 text-lg text-white w-full max-w-sm px-6">
 
-        <p>TaleyaLabs LLC and its subsidiaries — including <strong class="text-white">travenie.com</strong> and <strong class="text-white">djirb.com</strong> — operate under a single unified privacy policy. Your data is handled the same way across every product we build.</p>
-
-        <div>
-          <p class="text-white font-medium mb-1">We do not sell your data. Ever.</p>
-          <p>We do not sell, rent, trade, or share personal information with third parties for commercial purposes. No data brokers. No ad networks. No tracking pixels.</p>
+        <!-- Menu items with staggered animation -->
+        <div class="menu-item">
+          <a href="https://travenie.com" class="menu-link block">Travenie</a>
         </div>
 
-        <div>
-          <p class="text-white font-medium mb-1">No advertising</p>
-          <p>Our products are ad-free. We do not run Google Ads, Meta Ads, or any third-party advertising. We are funded by the service we provide — not by monetizing your attention.</p>
+        <div class="menu-item">
+          <a href="#" class="menu-link coming-soon block cursor-default">
+            djïrb
+            <span class="coming-soon-badge">Coming Soon</span>
+          </a>
         </div>
 
-        <div>
-          <p class="text-white font-medium mb-1">SMS messaging</p>
-          <p>When you provide your phone number for verification, you consent to receive one-time SMS verification codes. These are used solely to verify your identity — never for marketing. Standard messaging rates may apply. Reply STOP at any time to opt out.</p>
+        <div class="menu-item">
+          <a href="#" class="menu-link block" onclick="event.preventDefault(); toggleAboutPanel();">
+            About Us
+          </a>
+          <div id="aboutPanel" class="menu-panel">
+            <div class="panel-content">
+              <p class="panel-text leading-relaxed">
+                Where soul meets system. We build intelligent experiences at the intersection of human intuition and emerging technology.
+              </p>
+            </div>
+          </div>
         </div>
 
-        <div>
-          <p class="text-white font-medium mb-1">Your conversations stay yours</p>
-          <p>Conversations with Taleya are used solely to deliver the travel concierge service. They are not used for profiling, retargeting, resale, or any purpose beyond fulfilling your request.</p>
+        <div class="menu-item">
+          <a href="mailto:support@taleyalabs.com" class="menu-link block">Contact</a>
         </div>
 
-        <div>
-          <p class="text-white font-medium mb-1">Data security</p>
-          <p>All data is encrypted in transit and at rest. We use row-level security to ensure only you can access your information.</p>
+        <div class="menu-item">
+          <a href="#" class="menu-link block" onclick="event.preventDefault(); togglePrivacyPanel();">
+            Privacy &amp; Compliance
+          </a>
+          <div id="privacyPanel" class="menu-panel">
+            <div class="panel-content">
+
+              <div class="panel-title">TaleyaLabs LLC — Privacy &amp; Compliance</div>
+
+              <p class="panel-text mb-4">
+                TaleyaLabs LLC and its subsidiaries — including <span class="text-cyan-300">travenie.com</span> and <span class="text-cyan-300">djirb.com</span> — operate under a single unified privacy policy. Your data is handled the same way across every product we build.
+              </p>
+
+              <div class="panel-section">
+                <div class="panel-section-title">We do not sell your data. Ever.</div>
+                <p class="panel-text">We do not sell, rent, trade, or share personal information with third parties for commercial purposes. No data brokers. No ad networks. No tracking pixels.</p>
+              </div>
+
+              <div class="panel-section">
+                <div class="panel-section-title">No advertising</div>
+                <p class="panel-text">Our products are ad-free. We do not run Google Ads, Meta Ads, or any third-party advertising. We are funded by the service we provide — not by monetizing your attention.</p>
+              </div>
+
+              <div class="panel-section">
+                <div class="panel-section-title">SMS messaging</div>
+                <p class="panel-text">When you provide your phone number for verification, you consent to receive one-time SMS verification codes. These are used solely to verify your identity — never for marketing. Standard messaging rates may apply. Reply STOP at any time to opt out.</p>
+              </div>
+
+              <div class="panel-section">
+                <div class="panel-section-title">Your conversations stay yours</div>
+                <p class="panel-text">Conversations with Taleya are used solely to deliver the travel concierge service. They are not used for profiling, retargeting, resale, or any purpose beyond fulfilling your request.</p>
+              </div>
+
+              <div class="panel-section">
+                <div class="panel-section-title">Data security</div>
+                <p class="panel-text">All data is encrypted in transit and at rest. We use row-level security to ensure only you can access your information.</p>
+              </div>
+
+              <div class="panel-section">
+                <div class="panel-section-title">Your rights</div>
+                <p class="panel-text">You may request deletion of your account and all associated data at any time by contacting <a href="mailto:support@taleyalabs.com" class="text-cyan-300 hover:text-cyan-200">support@taleyalabs.com</a>. We will fulfill all deletion requests within 30 days.</p>
+              </div>
+
+              <div class="panel-footer">
+                Last updated: April 2026 &bull; TaleyaLabs LLC &bull; All Rights Reserved
+              </div>
+
+            </div>
+          </div>
         </div>
 
-        <div>
-          <p class="text-white font-medium mb-1">Your rights</p>
-          <p>You may request deletion of your account and all associated data at any time by contacting <a href="mailto:support@taleyalabs.com" class="text-cyan-400 hover:text-cyan-300">support@taleyalabs.com</a>. We will fulfill all deletion requests within 30 days.</p>
+        <!-- Menu footer -->
+        <div class="menu-footer text-center pt-8">
+          <div class="brand">TaleyaLabs LLC</div>
+          <div class="mt-1">Design &bull; Develop &bull; Deploy</div>
         </div>
 
-        <p class="text-xs text-gray-600 pt-2 border-t border-gray-800">Last updated: April 2026 &bull; TaleyaLabs LLC &bull; All Rights Reserved</p>
-      </div>
-
-      <div class="pt-8 text-sm text-gray-500">
-        TaleyaLabs LLC<br>
-        Design &bull; Develop &bull; Deploy
       </div>
     </div>
   </div>
@@ -812,7 +1051,31 @@
     requestAnimationFrame(animate);
 
     // ── Menu ──
-    function toggleMenu() { document.getElementById('menu').classList.toggle('hidden'); }
+    function toggleMenu() {
+      const menu = document.getElementById('menu');
+      menu.classList.toggle('hidden');
+      if (!menu.classList.contains('hidden')) {
+        // Reset animations when menu opens
+        document.querySelectorAll('.menu-item').forEach((item, idx) => {
+          item.style.animation = 'none';
+          setTimeout(() => {
+            item.style.animation = `menuSlideUp 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards`;
+            item.style.animationDelay = `${idx * 0.1}s`;
+          }, 10);
+        });
+      }
+    }
+
+    function toggleAboutPanel() {
+      const panel = document.getElementById('aboutPanel');
+      panel.classList.toggle('open');
+    }
+
+    function togglePrivacyPanel() {
+      const panel = document.getElementById('privacyPanel');
+      panel.classList.toggle('open');
+    }
+
     document.addEventListener('keydown', (e) => {
       if (e.key === 'Escape') document.getElementById('menu').classList.add('hidden');
     });
